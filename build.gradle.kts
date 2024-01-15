@@ -1,19 +1,20 @@
 plugins {
-    id("java")
+    application
 }
 
 group = "ru.itmo.mit"
 version = "1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
+subprojects {
+    apply {
+        plugin("application")
+    }
 
-dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-}
+    repositories {
+        mavenCentral()
+    }
 
-tasks.test {
-    useJUnitPlatform()
+    dependencies {
+        implementation("com.google.protobuf:protobuf-java:3.25.2")
+    }
 }
