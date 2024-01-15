@@ -10,6 +10,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
 
 public class ChannelHandler {
     private static final int FACTOR = 2;
@@ -19,9 +20,11 @@ public class ChannelHandler {
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
     private ByteBuffer writeBuffer = ByteBuffer.allocate(INITIAL_WRITE_BUFFER_SIZE);
     private final SocketChannel socketChannel;
+    private final ExecutorService threadPool;
 
-    public ChannelHandler(SocketChannel socketChannel) {
+    public ChannelHandler(SocketChannel socketChannel, ExecutorService threadPool) {
         this.socketChannel = socketChannel;
+        this.threadPool = threadPool;
     }
 
     public void tryRead() throws IOException {

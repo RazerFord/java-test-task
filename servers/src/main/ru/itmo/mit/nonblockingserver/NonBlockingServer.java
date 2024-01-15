@@ -8,6 +8,7 @@ import java.net.SocketAddress;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.Executors;
 
 public class NonBlockingServer implements Server, AutoCloseable {
     private static final int NUMBER_THREADS = 10;
@@ -32,7 +33,8 @@ public class NonBlockingServer implements Server, AutoCloseable {
 
         try (
                 var socketChannel1 = socketChannel;
-                var selector = Selector.open()
+                var selector = Selector.open();
+                var threadPool = Executors.newFixedThreadPool(numberThreads)
         ) {
             SelectorReader selectorReader = new SelectorReader(selector);
             Thread threadSelectorReader = new Thread(selectorReader);
@@ -41,7 +43,7 @@ public class NonBlockingServer implements Server, AutoCloseable {
             while (!closed && socketChannel1.isOpen() && !Thread.currentThread().isInterrupted()) {
                 SocketChannel clientSocketChannel = socketChannel1.accept();
                 clientSocketChannel.configureBlocking(false);
-                selectorReader.add(new ChannelHandler(clientSocketChannel));
+                selectorReader.add(new ChannelHandler(clientSocketChannel, threadPool));
                 selector.wakeup();
             }
         }
