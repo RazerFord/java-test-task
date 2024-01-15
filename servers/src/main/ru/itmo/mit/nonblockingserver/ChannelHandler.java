@@ -13,7 +13,7 @@ import java.util.Arrays;
 
 public class ChannelHandler {
     private static final int FACTOR = 2;
-    private static final int INITIAL_READ_BUFFER_SIZE = 1024;
+    private static final int INITIAL_READ_BUFFER_SIZE = 1;
     private static final int INITIAL_WRITE_BUFFER_SIZE = 1024;
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
@@ -27,13 +27,18 @@ public class ChannelHandler {
     public void tryRead() throws IOException {
         if (socketChannel.read(readBuffer) == -1) return;
         int readBytes = readBuffer.position();
+
+        if (!readBuffer.hasRemaining()) {
+            increaseReadBufferAfterCompact();
+        }
         if (sizeMessage == -1) {
             if (readBytes < Integer.BYTES) return;
             sizeMessage = readBuffer.flip().getInt();
             readBuffer.compact();
-            if (sizeMessage > readBuffer.position()) increaseReadBuffer();
+            if (sizeMessage > readBuffer.position()) increaseReadBufferAfterCompact();
         }
         if (messageReady()) {
+            readBuffer.flip();
             var message = MessageOuterClass.Message.parseFrom(readBuffer);
             readBuffer.compact();
             sizeMessage = -1;
@@ -46,14 +51,13 @@ public class ChannelHandler {
     }
 
     private boolean messageReady() {
-        return sizeMessage == readBuffer.position();
+        return sizeMessage <= readBuffer.position();
     }
 
-    private void increaseReadBuffer() {
+    private void increaseReadBufferAfterCompact() {
         int newSizeBuffer = FACTOR * readBuffer.limit();
         ByteBuffer newByteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer.array(), newSizeBuffer));
         newByteBuffer.position(readBuffer.position());
-        newByteBuffer.limit(readBuffer.limit());
         readBuffer = newByteBuffer;
     }
 }
