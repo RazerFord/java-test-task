@@ -25,21 +25,23 @@ public class ChannelHandler {
     }
 
     public void tryRead() throws IOException {
+        if (!readBuffer.hasRemaining() || sizeMessage > readBuffer.position()) {
+            increaseReadBufferAfterCompact();
+        }
+
         if (socketChannel.read(readBuffer) == -1) return;
         int readBytes = readBuffer.position();
 
-        if (!readBuffer.hasRemaining()) {
-            increaseReadBufferAfterCompact();
-        }
         if (sizeMessage == -1) {
             if (readBytes < Integer.BYTES) return;
             sizeMessage = readBuffer.flip().getInt();
             readBuffer.compact();
-            if (sizeMessage > readBuffer.position()) increaseReadBufferAfterCompact();
         }
+
         if (messageReady()) {
             readBuffer.flip();
             var message = MessageOuterClass.Message.parseFrom(readBuffer);
+            for (var i : message.getNumberList()) System.out.println(i);
             readBuffer.compact();
             sizeMessage = -1;
         }
