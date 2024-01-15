@@ -3,5 +3,5 @@ syntax = "proto3";
 package ru.itmo.mit;
 
 message Message {
-  repeated int32 i = 1;
+  repeated int32 number = 1;
 }
