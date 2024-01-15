@@ -1,16 +1,43 @@
 package ru.itmo.mit.nonblockingserver;
 
-import java.nio.channels.SocketChannel;
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class SelectorReader implements Runnable {
-    private final SocketChannel socketChannel;
+    private final Selector selector;
+    private final Queue<ChannelHandler> channelHandlerQueue = new LinkedBlockingQueue<>();
 
-    public SelectorReader(SocketChannel socketChannel) {
-        this.socketChannel = socketChannel;
+    public SelectorReader(Selector selector) {
+        this.selector = selector;
     }
 
     @Override
     public void run() {
+        try {
+            while (selector.isOpen()) {
+                selector.select();
+                var selectedKeys = selector.selectedKeys();
+                var iterator = selectedKeys.iterator();
+                while (iterator.hasNext()) {
+                    // todo handle query
+                    var selectedKey = iterator.next();
+                    var object = selectedKey.attachment();
+                    iterator.remove();
+                }
+                while (!channelHandlerQueue.isEmpty()) {
+                    ChannelHandler channelHandler = channelHandlerQueue.poll();
+                    channelHandler.register(selector, SelectionKey.OP_READ);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    public boolean add(ChannelHandler channelHandler) {
+        return channelHandlerQueue.add(channelHandler);
     }
 }

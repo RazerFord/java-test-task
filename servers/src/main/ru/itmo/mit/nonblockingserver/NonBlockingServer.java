@@ -5,7 +5,6 @@ import ru.itmo.mit.Server;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -31,12 +30,19 @@ public class NonBlockingServer implements Server, AutoCloseable {
         socketChannel = ServerSocketChannel.open();
         socketChannel.socket().bind(inetAddress);
 
-        try (var socketChannel1 = socketChannel;
-             var selector = Selector.open()) {
+        try (
+                var socketChannel1 = socketChannel;
+                var selector = Selector.open()
+        ) {
+            SelectorReader selectorReader = new SelectorReader(selector);
+            Thread threadSelectorReader = new Thread(selectorReader);
+            threadSelectorReader.start();
+
             while (!closed && socketChannel1.isOpen() && !Thread.currentThread().isInterrupted()) {
                 SocketChannel clientSocketChannel = socketChannel1.accept();
                 clientSocketChannel.configureBlocking(false);
-                clientSocketChannel.register(selector, SelectionKey.OP_READ);
+                selectorReader.add(new ChannelHandler(clientSocketChannel));
+                selector.wakeup();
             }
         }
     }
