@@ -19,7 +19,6 @@ public class ChannelHandler {
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
     private Queue<ByteBuffer> writeBuffers = new LinkedBlockingQueue<>();
-    ;
     private final SocketChannel socketChannel;
     private final ExecutorService threadPool;
     private final SelectorWriter selectorWriter;
