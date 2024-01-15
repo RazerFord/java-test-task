@@ -10,10 +10,9 @@ java {
     sourceSets {
         main {
             java.setSrcDirs(listOf("src/main"))
-            resources.setSrcDirs(listOf("src/resources"))
-        }
-        test {
-            java.setSrcDirs(listOf("src/test"))
         }
     }
 }
+
+val mainClassName = "ru.itmo.mit.Main"
+project.setProperty("mainClassName", mainClassName)
