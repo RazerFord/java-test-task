@@ -62,16 +62,16 @@ public class Main {
                 size = byteBuffer.getInt();
 
                 byteBuffer = ByteBuffer.allocate(size);
-//                if (!read(inputStream, byteBuffer, size)) return;
-//                message = MessageOuterClass.Message.parseFrom(byteBuffer);
-//                for (int f : message.getNumberList()) {
-//                    System.out.printf("%s ", f);
-//                }
-//                try {
-//                    server.close();
-//                } catch (Exception e) {
-//                    throw new RuntimeException(e);
-//                }
+                if (!read(inputStream, byteBuffer, size)) return;
+                message = MessageOuterClass.Message.parseFrom(byteBuffer);
+                for (int f : message.getNumberList()) {
+                    System.out.printf("%s ", f);
+                }
+                try {
+                    server.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         System.out.println("END");

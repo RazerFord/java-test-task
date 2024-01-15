@@ -33,7 +33,7 @@ public class SelectorWriter implements Runnable {
                 }
                 while (!channelHandlerQueue.isEmpty()) {
                     ChannelHandler channelHandler = channelHandlerQueue.poll();
-                    channelHandler.register(selector, SelectionKey.OP_READ);
+                    channelHandler.register(selector, SelectionKey.OP_WRITE);
                 }
             }
         } catch (IOException e) {
