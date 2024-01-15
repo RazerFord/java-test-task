@@ -1,3 +1,3 @@
 rootProject.name = "java-test-task"
 
-include("client", "common", "starter")
+include("client", "servers", "common", "starter")
