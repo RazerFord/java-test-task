@@ -34,17 +34,20 @@ public class NonBlockingServer implements Server, AutoCloseable {
         try (
                 var socketChannel1 = socketChannel;
                 var readSelector = Selector.open();
+                var writeSelector = Selector.open();
                 var threadPool = Executors.newFixedThreadPool(numberThreads)
         ) {
             SelectorReader selectorReader = new SelectorReader(readSelector);
             Thread threadSelectorReader = new Thread(selectorReader);
             threadSelectorReader.start();
+            SelectorWriter selectorWriter = new SelectorWriter(writeSelector);
+            Thread threadSelectorWriter = new Thread(selectorWriter);
+            threadSelectorWriter.start();
 
             while (!closed && socketChannel1.isOpen() && !Thread.currentThread().isInterrupted()) {
                 SocketChannel clientSocketChannel = socketChannel1.accept();
                 clientSocketChannel.configureBlocking(false);
-                selectorReader.add(new ChannelHandler(clientSocketChannel, threadPool));
-                readSelector.wakeup();
+                selectorReader.addAndWakeup(new ChannelHandler(clientSocketChannel, threadPool, selectorWriter));
             }
         }
     }

@@ -1,5 +1,7 @@
 package ru.itmo.mit.nonblockingserver;
 
+import ru.itmo.mit.ServerException;
+
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -35,11 +37,21 @@ public class SelectorReader implements Runnable {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ServerException(e);
         }
+    }
+
+    public boolean addAndWakeup(ChannelHandler channelHandler) {
+        boolean status = channelHandlerQueue.add(channelHandler);
+        selector.wakeup();
+        return status;
     }
 
     public boolean add(ChannelHandler channelHandler) {
         return channelHandlerQueue.add(channelHandler);
+    }
+
+    public void wakeup() {
+        selector.wakeup();
     }
 }

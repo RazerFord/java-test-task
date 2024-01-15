@@ -22,10 +22,12 @@ public class ChannelHandler {
     ;
     private final SocketChannel socketChannel;
     private final ExecutorService threadPool;
+    private final SelectorWriter selectorWriter;
 
-    public ChannelHandler(SocketChannel socketChannel, ExecutorService threadPool) {
+    public ChannelHandler(SocketChannel socketChannel, ExecutorService threadPool, SelectorWriter selectorWriter) {
         this.socketChannel = socketChannel;
         this.threadPool = threadPool;
+        this.selectorWriter = selectorWriter;
     }
 
     public void tryRead() throws IOException {
@@ -51,6 +53,10 @@ public class ChannelHandler {
         }
     }
 
+    public void tryWrite() {
+
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public SelectionKey register(@NotNull Selector selector, int ops) throws ClosedChannelException {
         return socketChannel.register(selector, ops, this);
@@ -67,6 +73,7 @@ public class ChannelHandler {
         ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + message.getSerializedSize());
         byteBuffer.putInt(numbers1.size()).put(message.toByteArray());
         writeBuffers.add(byteBuffer);
+        selectorWriter.addAndWakeup(this);
     }
 
     private void increaseReadBufferAfterCompact() {
