@@ -16,12 +16,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class ChannelHandler {
     private static final int FACTOR = 2;
     private static final int INITIAL_READ_BUFFER_SIZE = 1024;
+    private static final String ERR_MSG = "SelectionKey must not be null";
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
     private Queue<ByteBuffer> writeBuffers = new LinkedBlockingQueue<>();
     private final SocketChannel socketChannel;
     private final ExecutorService threadPool;
     private final SelectorWriter selectorWriter;
+    private SelectionKey selectionKey;
 
     public ChannelHandler(SocketChannel socketChannel, ExecutorService threadPool, SelectorWriter selectorWriter) {
         this.socketChannel = socketChannel;
@@ -52,13 +54,20 @@ public class ChannelHandler {
         }
     }
 
-    public void tryWrite() {
-
+    public void tryWrite() throws IOException {
+        var head = writeBuffers.peek();
+        if (head == null) return;
+        socketChannel.write(head);
+        if (!head.hasRemaining()) {
+            writeBuffers.poll();
+        }
+        if (writeBuffers.isEmpty()) {
+            Objects.requireNonNull(selectionKey, ERR_MSG).cancel();
+        }
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public SelectionKey register(@NotNull Selector selector, int ops) throws ClosedChannelException {
-        return socketChannel.register(selector, ops, this);
+    public void register(@NotNull Selector selector, int ops) throws ClosedChannelException {
+        selectionKey = socketChannel.register(selector, ops, this);
     }
 
     private boolean messageReady() {
