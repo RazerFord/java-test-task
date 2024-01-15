@@ -24,10 +24,12 @@ public class BlockingServer implements Server {
     public void start() throws IOException {
         try (var socket = new ServerSocket(serverPort);
              var threadPool = Executors.newFixedThreadPool(numberThreads)) {
-            var port = socket.accept();
-            Thread thread = new Thread(new Handler(port, threadPool));
-//            thread.setDaemon(true);
-            thread.start();
+            while (!socket.isClosed() && !Thread.currentThread().isInterrupted()) {
+                var port = socket.accept();
+                Thread thread = new Thread(new Handler(port, threadPool));
+                thread.setDaemon(true);
+                thread.start();
+            }
         }
     }
 }
