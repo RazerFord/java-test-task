@@ -4,12 +4,15 @@ import ru.itmo.mit.Server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.SocketException;
 import java.util.concurrent.Executors;
 
-public class BlockingServer implements Server {
+public class BlockingServer implements Server, AutoCloseable {
     private static final int NUMBER_THREADS = 10;
     private final int serverPort;
     private final int numberThreads;
+    private ServerSocket socket;
+    private boolean closed;
 
     public BlockingServer(int serverPort) {
         this(serverPort, NUMBER_THREADS);
@@ -22,14 +25,22 @@ public class BlockingServer implements Server {
 
     @Override
     public void start() throws IOException {
-        try (var socket = new ServerSocket(serverPort);
+        socket = new ServerSocket(serverPort);
+        try (var socket1 = socket;
              var threadPool = Executors.newFixedThreadPool(numberThreads)) {
-            while (!socket.isClosed() && !Thread.currentThread().isInterrupted()) {
-                var port = socket.accept();
+            while (!closed && !socket1.isClosed() && !Thread.currentThread().isInterrupted()) {
+                var port = socket1.accept();
                 Thread thread = new Thread(new Handler(port, threadPool));
                 thread.setDaemon(true);
                 thread.start();
             }
+        } catch (SocketException ignored) {
         }
+    }
+
+    @Override
+    public void close() throws Exception {
+        closed = true;
+        if (socket != null && !socket.isClosed()) socket.close();
     }
 }

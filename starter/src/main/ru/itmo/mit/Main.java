@@ -13,9 +13,10 @@ import java.util.List;
 // then press Enter. You can now see whitespace characters in your code.
 public class Main {
     public static void main(String[] args) throws IOException {
+        var server = new BlockingServer(8081);
         new Thread(() -> {
             try {
-                new BlockingServer(8081).start();
+                server.start();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -55,6 +56,11 @@ public class Main {
                 message = MessageOuterClass.Message.parseFrom(byteBuffer);
                 for (int f : message.getNumberList()) {
                     System.out.printf("%s ", f);
+                }
+                try {
+                    server.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
