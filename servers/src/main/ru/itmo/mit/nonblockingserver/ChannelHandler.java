@@ -9,16 +9,17 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ChannelHandler {
     private static final int FACTOR = 2;
-    private static final int INITIAL_READ_BUFFER_SIZE = 1;
-    private static final int INITIAL_WRITE_BUFFER_SIZE = 1024;
+    private static final int INITIAL_READ_BUFFER_SIZE = 1024;
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
-    private ByteBuffer writeBuffer = ByteBuffer.allocate(INITIAL_WRITE_BUFFER_SIZE);
+    private Queue<ByteBuffer> writeBuffers = new LinkedBlockingQueue<>();
+    ;
     private final SocketChannel socketChannel;
     private final ExecutorService threadPool;
 
@@ -44,7 +45,7 @@ public class ChannelHandler {
         if (messageReady()) {
             readBuffer.flip();
             var message = MessageOuterClass.Message.parseFrom(readBuffer);
-            for (var i : message.getNumberList()) System.out.println(i);
+            threadPool.execute(() -> handle(message.getNumberList()));
             readBuffer.compact();
             sizeMessage = -1;
         }
@@ -57,6 +58,15 @@ public class ChannelHandler {
 
     private boolean messageReady() {
         return sizeMessage <= readBuffer.position();
+    }
+
+    private void handle(List<Integer> numbers) {
+        var numbers1 = new ArrayList<>(numbers);
+        Collections.sort(numbers1);
+        MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + message.getSerializedSize());
+        byteBuffer.putInt(numbers1.size()).put(message.toByteArray());
+        writeBuffers.add(byteBuffer);
     }
 
     private void increaseReadBufferAfterCompact() {

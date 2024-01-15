@@ -33,10 +33,10 @@ public class NonBlockingServer implements Server, AutoCloseable {
 
         try (
                 var socketChannel1 = socketChannel;
-                var selector = Selector.open();
+                var readSelector = Selector.open();
                 var threadPool = Executors.newFixedThreadPool(numberThreads)
         ) {
-            SelectorReader selectorReader = new SelectorReader(selector);
+            SelectorReader selectorReader = new SelectorReader(readSelector);
             Thread threadSelectorReader = new Thread(selectorReader);
             threadSelectorReader.start();
 
@@ -44,7 +44,7 @@ public class NonBlockingServer implements Server, AutoCloseable {
                 SocketChannel clientSocketChannel = socketChannel1.accept();
                 clientSocketChannel.configureBlocking(false);
                 selectorReader.add(new ChannelHandler(clientSocketChannel, threadPool));
-                selector.wakeup();
+                readSelector.wakeup();
             }
         }
     }
