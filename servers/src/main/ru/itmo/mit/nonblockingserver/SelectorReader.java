@@ -22,9 +22,11 @@ public class SelectorReader implements Runnable {
                 var selectedKeys = selector.selectedKeys();
                 var iterator = selectedKeys.iterator();
                 while (iterator.hasNext()) {
-                    // todo handle query
                     var selectedKey = iterator.next();
-                    var object = selectedKey.attachment();
+                    if (selectedKey.isReadable()) {
+                        var channelHandler = (ChannelHandler) selectedKey.attachment();
+                        channelHandler.tryRead();
+                    }
                     iterator.remove();
                 }
                 while (!channelHandlerQueue.isEmpty()) {
