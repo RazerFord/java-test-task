@@ -3,6 +3,7 @@ package ru.itmo.mit.blockingserver;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
 import ru.itmo.mit.ServerException;
+import ru.itmo.mit.Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,11 +60,7 @@ public class Handler implements Runnable {
             final int size = message.getSerializedSize();
             ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);
             byteBuffer.putInt(size).put(message.toByteArray());
-            try {
-                outputStream.write(byteBuffer.array());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            Utils.run(() -> outputStream.write(byteBuffer.array()));
         });
     }
 
