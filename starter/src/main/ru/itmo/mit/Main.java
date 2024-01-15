@@ -1,19 +1,16 @@
 package ru.itmo.mit;
 
-import ru.itmo.mit.blockingserver.BlockingServer;
+import ru.itmo.mit.nonblockingserver.NonBlockingServer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.List;
 
 // Press Shift twice to open the Search Everywhere dialog and type `show whitespaces`,
 // then press Enter. You can now see whitespace characters in your code.
 public class Main {
     public static void main(String[] args) throws IOException {
-        var server = new BlockingServer(8081);
+        var server = new NonBlockingServer(8081);
         new Thread(() -> {
             try {
                 server.start();
@@ -21,7 +18,7 @@ public class Main {
                 throw new RuntimeException(e);
             }
         }).start();
-
+        /*
         int i = 0;
         try (Socket socket = new Socket("localhost", 8081);
              InputStream inputStream = socket.getInputStream();
@@ -63,7 +60,7 @@ public class Main {
                     throw new RuntimeException(e);
                 }
             }
-        }
+        }*/
         System.out.println("END");
     }
 
