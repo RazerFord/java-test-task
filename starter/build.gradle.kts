@@ -13,6 +13,3 @@ java {
         }
     }
 }
-
-val mainClassName = "ru.itmo.mit.Main"
-project.setProperty("mainClassName", mainClassName)
