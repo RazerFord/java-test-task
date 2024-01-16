@@ -88,7 +88,6 @@ public class ChannelHandler {
         } finally {
             if (writeBuffers.isEmpty()) {
                 Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();
-                socketChannel.close();
                 selectionKeyWrite = null;
             }
         }
