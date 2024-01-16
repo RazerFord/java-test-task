@@ -2,7 +2,6 @@ package ru.itmo.mit.nonblockingserver;
 
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
-import ru.itmo.mit.ServerException;
 import ru.itmo.mit.Utils;
 
 import java.io.IOException;
@@ -14,8 +13,11 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ChannelHandler {
+    private static final Logger LOGGER = Logger.getLogger(ChannelHandler.class.getName());
     private static final int FACTOR = 2;
     private static final int INITIAL_READ_BUFFER_SIZE = 1024;
     private static final String ERR_MSG = "SelectionKey must not be null";
@@ -43,7 +45,8 @@ public class ChannelHandler {
             if (socketChannel.read(readBuffer) == -1) return;
         } catch (IOException e) {
             threadPool.execute(this::handleClosing);
-            throw new ServerException(e);
+            LOGGER.log(Level.WARNING, e.getMessage());
+            return;
         }
         int readBytes = readBuffer.position();
 
@@ -84,7 +87,7 @@ public class ChannelHandler {
             }
         } catch (IOException e) {
             writeBuffers.clear();
-            throw new ServerException(e);
+            LOGGER.log(Level.WARNING, e.getMessage());
         } finally {
             if (writeBuffers.isEmpty()) {
                 Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();

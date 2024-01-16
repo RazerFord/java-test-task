@@ -1,14 +1,15 @@
 package ru.itmo.mit.nonblockingserver;
 
-import ru.itmo.mit.ServerException;
-
 import java.io.IOException;
 import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.Selector;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SelectorReader implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(SelectorReader.class.getName());
     private final Selector selector;
     private final Queue<ChannelHandler> channelHandlerQueue = new LinkedBlockingQueue<>();
 
@@ -37,21 +38,12 @@ public class SelectorReader implements Runnable {
                 }
             }
         } catch (IOException | ClosedSelectorException e) {
-            throw new ServerException(e);
+            LOGGER.log(Level.WARNING, e.getMessage());
         }
     }
 
-    public boolean addAndWakeup(ChannelHandler channelHandler) {
-        boolean status = channelHandlerQueue.add(channelHandler);
-        selector.wakeup();
-        return status;
-    }
-
-    public boolean add(ChannelHandler channelHandler) {
-        return channelHandlerQueue.add(channelHandler);
-    }
-
-    public void wakeup() {
+    public void addAndWakeup(ChannelHandler channelHandler) {
+        channelHandlerQueue.add(channelHandler);
         selector.wakeup();
     }
 }

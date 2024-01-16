@@ -1,7 +1,6 @@
 package ru.itmo.mit.nonblockingserver;
 
 import ru.itmo.mit.Server;
-import ru.itmo.mit.ServerException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,8 +11,11 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class NonBlockingServer implements Server, AutoCloseable {
+    private static final Logger LOGGER = Logger.getLogger(NonBlockingServer.class.getName());
     private static final int NUMBER_THREADS = 10;
     private final SocketAddress inetAddress;
     private final int numberThreads;
@@ -53,7 +55,7 @@ public class NonBlockingServer implements Server, AutoCloseable {
                 selectorReader.addAndWakeup(new ChannelHandler(clientSocketChannel, threadPool, selectorWriter));
             }
         } catch (SocketException | AsynchronousCloseException e) {
-            throw new ServerException(e);
+            LOGGER.log(Level.WARNING, e.getMessage());
         }
     }
 
