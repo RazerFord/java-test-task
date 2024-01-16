@@ -49,6 +49,7 @@ public class ChannelHandler {
             readBuffer.flip();
             var message = MessageOuterClass.Message.parseFrom(readBuffer);
             threadPool.execute(() -> handle(message.getNumberList()));
+            readBuffer.position(sizeMessage);
             readBuffer.compact();
             sizeMessage = -1;
         }
