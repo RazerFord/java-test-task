@@ -78,8 +78,10 @@ public class ChannelHandler {
         var numbers1 = new ArrayList<>(numbers);
         Collections.sort(numbers1);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + message.getSerializedSize());
-        byteBuffer.putInt(numbers1.size()).put(message.toByteArray());
+        final int size = message.getSerializedSize();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);
+        byteBuffer.putInt(size).put(message.toByteArray());
+        byteBuffer.flip();
         writeBuffers.add(byteBuffer);
         selectorWriter.addAndWakeup(this);
     }

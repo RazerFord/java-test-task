@@ -1,10 +1,13 @@
 package ru.itmo.mit.nonblockingserver;
 
 import ru.itmo.mit.Server;
+import ru.itmo.mit.ServerException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.SocketException;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -49,6 +52,8 @@ public class NonBlockingServer implements Server, AutoCloseable {
                 clientSocketChannel.configureBlocking(false);
                 selectorReader.addAndWakeup(new ChannelHandler(clientSocketChannel, threadPool, selectorWriter));
             }
+        } catch (SocketException | AsynchronousCloseException e) {
+            throw new ServerException(e);
         }
     }
 

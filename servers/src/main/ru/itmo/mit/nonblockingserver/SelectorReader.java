@@ -3,6 +3,7 @@ package ru.itmo.mit.nonblockingserver;
 import ru.itmo.mit.ServerException;
 
 import java.io.IOException;
+import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Queue;
@@ -36,7 +37,7 @@ public class SelectorReader implements Runnable {
                     channelHandler.register(selector, SelectionKey.OP_READ);
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | ClosedSelectorException e) {
             throw new ServerException(e);
         }
     }
