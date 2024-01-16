@@ -2,7 +2,6 @@ package ru.itmo.mit.blockingserver;
 
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
-import ru.itmo.mit.ServerException;
 import ru.itmo.mit.Utils;
 
 import java.io.IOException;
@@ -15,8 +14,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Handler implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(Handler.class.getName());
     private final Socket socket;
     private final ExecutorService executorService;
 
@@ -48,7 +50,7 @@ public class Handler implements Runnable {
                 executorService.execute(() -> handle(message.getNumberList(), outputStream, sender));
             }
         } catch (IOException e) {
-            throw new ServerException(e);
+            LOGGER.log(Level.WARNING, e.getMessage());
         }
     }
 
