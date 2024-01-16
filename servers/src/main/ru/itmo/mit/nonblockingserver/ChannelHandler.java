@@ -23,7 +23,8 @@ public class ChannelHandler {
     private final SocketChannel socketChannel;
     private final ExecutorService threadPool;
     private final SelectorWriter selectorWriter;
-    private SelectionKey selectionKey;
+    private SelectionKey selectionKeyRead;
+    private SelectionKey selectionKeyWrite;
 
     public ChannelHandler(SocketChannel socketChannel, ExecutorService threadPool, SelectorWriter selectorWriter) {
         this.socketChannel = socketChannel;
@@ -57,18 +58,32 @@ public class ChannelHandler {
 
     public void tryWrite() throws IOException {
         var head = writeBuffers.peek();
-        if (head == null) return;
+        // Может быть `null` если два потока добавили буферы
+        // в очередь на запись. Один из них добавил себя в
+        // очередь на регистрацию к селектору на запись, и вызвал `wakeup`.
+        // Селектор проснулся, зарегистрировался и отправил
+        // данные из обоих буферов, разрегистрировался, уснул.
+        // Затем вызывается регистрация с последующим wakeup из второго потока.
+        // Но данных в буфере уже нет
+        if (head == null) {
+            Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();
+            return;
+        }
         socketChannel.write(head);
         if (!head.hasRemaining()) {
             writeBuffers.poll();
         }
         if (writeBuffers.isEmpty()) {
-            Objects.requireNonNull(selectionKey, ERR_MSG).cancel();
+            Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();
         }
     }
 
-    public void register(@NotNull Selector selector, int ops) throws ClosedChannelException {
-        selectionKey = socketChannel.register(selector, ops, this);
+    public void registerRead(@NotNull Selector selector) throws ClosedChannelException {
+        selectionKeyRead = socketChannel.register(selector, SelectionKey.OP_READ, this);
+    }
+
+    public void registerWrite(@NotNull Selector selector) throws ClosedChannelException {
+        selectionKeyWrite = socketChannel.register(selector, SelectionKey.OP_WRITE, this);
     }
 
     private boolean messageReady() {

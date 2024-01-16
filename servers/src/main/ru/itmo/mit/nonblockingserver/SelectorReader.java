@@ -4,7 +4,6 @@ import ru.itmo.mit.ServerException;
 
 import java.io.IOException;
 import java.nio.channels.ClosedSelectorException;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -34,7 +33,7 @@ public class SelectorReader implements Runnable {
                 }
                 while (!channelHandlerQueue.isEmpty()) {
                     ChannelHandler channelHandler = channelHandlerQueue.poll();
-                    channelHandler.register(selector, SelectionKey.OP_READ);
+                    channelHandler.registerRead(selector);
                 }
             }
         } catch (IOException | ClosedSelectorException e) {
