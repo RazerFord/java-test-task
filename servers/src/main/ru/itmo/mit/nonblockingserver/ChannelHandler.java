@@ -2,6 +2,8 @@ package ru.itmo.mit.nonblockingserver;
 
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
+import ru.itmo.mit.ServerException;
+import ru.itmo.mit.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -37,7 +39,12 @@ public class ChannelHandler {
             increaseReadBufferAfterCompact();
         }
 
-        if (socketChannel.read(readBuffer) == -1) return;
+        try {
+            if (socketChannel.read(readBuffer) == -1) return;
+        } catch (IOException e) {
+            threadPool.execute(this::handleClosing);
+            throw new ServerException(e);
+        }
         int readBytes = readBuffer.position();
 
         if (sizeMessage == -1) {
@@ -70,13 +77,20 @@ public class ChannelHandler {
             selectionKeyWrite = null;
             return;
         }
-        socketChannel.write(head);
-        if (!head.hasRemaining()) {
-            writeBuffers.poll();
-        }
-        if (writeBuffers.isEmpty()) {
-            Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();
-            selectionKeyWrite = null;
+        try {
+            socketChannel.write(head);
+            if (!head.hasRemaining()) {
+                writeBuffers.poll();
+            }
+        } catch (IOException e) {
+            writeBuffers.clear();
+            throw new ServerException(e);
+        } finally {
+            if (writeBuffers.isEmpty()) {
+                Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();
+                socketChannel.close();
+                selectionKeyWrite = null;
+            }
         }
     }
 
@@ -102,6 +116,12 @@ public class ChannelHandler {
         byteBuffer.flip();
         writeBuffers.add(byteBuffer);
         selectorWriter.addAndWakeup(this);
+    }
+
+    private void handleClosing() {
+        Objects.requireNonNull(selectionKeyRead, ERR_MSG).cancel();
+        selectionKeyRead = null;
+        Utils.run(socketChannel::close);
     }
 
     private void increaseReadBufferAfterCompact() {
