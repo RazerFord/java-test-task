@@ -67,6 +67,7 @@ public class ChannelHandler {
         // Но данных в буфере уже нет
         if (head == null) {
             Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();
+            selectionKeyWrite = null;
             return;
         }
         socketChannel.write(head);
@@ -75,6 +76,7 @@ public class ChannelHandler {
         }
         if (writeBuffers.isEmpty()) {
             Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();
+            selectionKeyWrite = null;
         }
     }
 
