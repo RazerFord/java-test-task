@@ -6,8 +6,11 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BlockingServer implements Server, AutoCloseable {
+    private static final Logger LOGGER = Logger.getLogger(BlockingServer.class.getName());
     private static final int NUMBER_THREADS = 10;
     private final int serverPort;
     private final int numberThreads;
@@ -34,7 +37,8 @@ public class BlockingServer implements Server, AutoCloseable {
                 thread.setDaemon(true);
                 thread.start();
             }
-        } catch (SocketException ignored) {
+        } catch (SocketException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
         }
     }
 
