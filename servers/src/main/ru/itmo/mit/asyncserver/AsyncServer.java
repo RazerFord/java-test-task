@@ -42,7 +42,7 @@ public class AsyncServer implements Server, AutoCloseable {
                 serverChannel = serverChannel1;
                 serverChannel1.bind(inetSocketAddress);
 
-                serverChannel1.accept(new AsyncHandler(threadPool, serverChannel1, this), new AcceptCallback());
+                serverChannel1.accept(new AsyncHandler(threadPool, serverChannel1, this), AcceptCallback.INSTANCE);
 
                 acceptLock.lock();
                 while (!closed && !Thread.currentThread().isInterrupted()) {

@@ -53,7 +53,7 @@ public class AsyncHandler {
     }
 
     public void asyncRead() {
-        asyncSocketChannel.read(readBuffer, this, new ReadCallback());
+        asyncSocketChannel.read(readBuffer, this, ReadCallback.INSTANCE);
     }
 
     public void asyncWrite() throws InvalidProtocolBufferException {
@@ -95,7 +95,7 @@ public class AsyncHandler {
         ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);
         byteBuffer.putInt(size).put(message.toByteArray());
         byteBuffer.flip();
-        asyncSocketChannel.write(byteBuffer, this, new WriteCallback());
+        asyncSocketChannel.write(byteBuffer, this, WriteCallback.INSTANCE);
         asyncRead();
     }
 

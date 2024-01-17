@@ -10,13 +10,15 @@ import java.util.logging.Logger;
 
 public class AcceptCallback implements CompletionHandler<AsynchronousSocketChannel, AsyncHandler> {
     private static final Logger LOGGER = Logger.getLogger(AcceptCallback.class.getName());
+    public static final AcceptCallback INSTANCE = new AcceptCallback();
+    private AcceptCallback(){}
 
     @Override
     public void completed(@NotNull AsynchronousSocketChannel result, @NotNull AsyncHandler attachment) {
         try {
             var asyncServerSocketChannel = attachment.getAsyncServerSocketChannel();
             if (asyncServerSocketChannel.isOpen()) {
-                asyncServerSocketChannel.accept(attachment.copy(), new AcceptCallback());
+                asyncServerSocketChannel.accept(attachment.copy(), INSTANCE);
             }
             attachment.setAsyncSocketChannel(result);
             attachment.asyncRead();
