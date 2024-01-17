@@ -12,14 +12,7 @@ public class DefaultWaiting implements Waiting {
 
     @Override
     public void trySleep() throws InterruptedException {
-        Duration currTime = Duration.ofMillis(System.currentTimeMillis());
-        Duration endSleepTime = lastTime.plus(period);
-        Duration diff = endSleepTime.minus(currTime);
-        while (diff.isPositive()) {
-            Thread.sleep(diff);
-            currTime = Duration.ofMillis(System.currentTimeMillis());
-            diff = endSleepTime.minus(currTime);
-        }
+       Waiting.trySleep(lastTime, period);
     }
 
     @Override
