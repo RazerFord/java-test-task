@@ -120,6 +120,9 @@ public class ChannelHandler {
         selectorWriter.addAndWakeup(this);
     }
 
+    // Если делать в thread pool, то может быть ситуация,
+    // что селектор будет пытаться прочитать из закрытого
+    // канала
     private void handleClosing() {
         Objects.requireNonNull(selectionKeyRead, ERR_MSG).cancel();
         selectionKeyRead = null;
