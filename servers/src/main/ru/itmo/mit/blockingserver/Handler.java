@@ -2,10 +2,10 @@ package ru.itmo.mit.blockingserver;
 
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
+import ru.itmo.mit.ServerException;
 import ru.itmo.mit.Utils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 public class Handler implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(Handler.class.getName());
+    private final MessageReader messageReader = new MessageReader();
     private final Socket socket;
     private final ExecutorService executorService;
 
@@ -36,20 +37,10 @@ public class Handler implements Runnable {
                 var sender = Executors.newSingleThreadExecutor()
         ) {
             while (!socket1.isClosed() && !Thread.currentThread().isInterrupted()) {
-                int size = Integer.BYTES;
-
-                ByteBuffer byteBuffer = ByteBuffer.allocate(size);
-                if (!read(inputStream, byteBuffer, size)) return;
-
-                size = byteBuffer.getInt();
-
-                byteBuffer = ByteBuffer.allocate(size);
-                if (!read(inputStream, byteBuffer, size)) return;
-
-                MessageOuterClass.Message message = MessageOuterClass.Message.parseFrom(byteBuffer);
+                var message = messageReader.read(inputStream);
                 executorService.execute(() -> handle(message.getNumberList(), outputStream, sender));
             }
-        } catch (IOException e) {
+        } catch (IOException | ServerException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
         }
     }
@@ -64,16 +55,5 @@ public class Handler implements Runnable {
             byteBuffer.putInt(size).put(message.toByteArray());
             Utils.run(() -> outputStream.write(byteBuffer.array()));
         });
-    }
-
-    private boolean read(InputStream inputStream, ByteBuffer byteBuffer, int size) throws IOException {
-        int maxSize = byteBuffer.array().length;
-        int totalReadBytes = 0;
-        while (totalReadBytes != size) {
-            int readBytes = inputStream.read(byteBuffer.array(), totalReadBytes, maxSize - totalReadBytes);
-            if (readBytes == -1) return false;
-            totalReadBytes += readBytes;
-        }
-        return true;
     }
 }
