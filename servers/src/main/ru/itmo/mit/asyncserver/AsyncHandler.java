@@ -110,7 +110,7 @@ public class AsyncHandler {
     }
 
     private void increaseWriteBufferInWriteMode() {
-        int newSizeBuffer = FACTOR * writeBuffer.limit();
+        int newSizeBuffer = FACTOR * writeBuffer.capacity();
         ByteBuffer newByteBuffer = ByteBuffer.wrap(Arrays.copyOf(writeBuffer.array(), newSizeBuffer));
         newByteBuffer.position(writeBuffer.position());
         writeBuffer = newByteBuffer;

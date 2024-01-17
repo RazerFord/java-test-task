@@ -127,7 +127,7 @@ public class ChannelHandler {
     }
 
     private void increaseReadBufferAfterCompact() {
-        int newSizeBuffer = FACTOR * readBuffer.limit();
+        int newSizeBuffer = FACTOR * readBuffer.capacity();
         ByteBuffer newByteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer.array(), newSizeBuffer));
         newByteBuffer.position(readBuffer.position());
         readBuffer = newByteBuffer;
