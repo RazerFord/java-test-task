@@ -1,6 +1,6 @@
 package ru.itmo.mit;
 
-import ru.itmo.mit.nonblockingserver.NonBlockingServer;
+import ru.itmo.mit.asyncserver.AsyncServer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +14,7 @@ import java.util.List;
 // then press Enter. You can now see whitespace characters in your code.
 public class Main {
     public static void main(String[] args) throws IOException {
-        var server = new NonBlockingServer(8081);
+        var server = new AsyncServer(8081);
         new Thread(() -> {
             try {
                 server.start();
@@ -34,6 +34,7 @@ public class Main {
         System.out.println(buffer.getInt());
         int i = 0;
         try (Socket socket = new Socket("0.0.0.0", 8081);
+             Socket socket1 = new Socket("0.0.0.0", 8081);
              InputStream inputStream = socket.getInputStream();
              OutputStream outputStream = socket.getOutputStream()) {
             while (i++ < 10) {

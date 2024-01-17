@@ -11,15 +11,15 @@ import java.util.logging.Logger;
 public class ReadCallback implements CompletionHandler<Integer, AsyncHandler> {
     private static final Logger LOGGER = Logger.getLogger(ReadCallback.class.getName());
     public static final ReadCallback INSTANCE = new ReadCallback();
-    private ReadCallback(){}
+
+    private ReadCallback() {
+    }
 
     @Override
     public void completed(Integer result, @NotNull AsyncHandler attachment) {
         try {
-            switch (attachment.check()) {
-                case READ -> attachment.asyncRead();
-                case WRITE -> attachment.asyncWrite();
-            }
+            if (attachment.checkRead()) attachment.handleRead();
+            else attachment.asyncRead();
         } catch (ShutdownChannelGroupException | InvalidProtocolBufferException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
         }
