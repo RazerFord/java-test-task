@@ -79,10 +79,11 @@ public class Client implements Runnable {
         buffer.compact();
         totalRead -= Integer.BYTES;
         while (totalRead < size) {
-            int read = inputStream.read(buffer.array());
+            int read = inputStream.read(buffer.array(), totalRead, size - totalRead);
             if (read == -1) throw END_STREAM;
             totalRead += read;
         }
+        buffer.position(totalRead);
         buffer.flip();
         MessageOuterClass.Message message = MessageOuterClass.Message.parseFrom(buffer);
         buffer.clear();

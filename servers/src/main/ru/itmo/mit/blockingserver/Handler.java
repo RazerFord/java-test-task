@@ -67,9 +67,10 @@ public class Handler implements Runnable {
     }
 
     private boolean read(InputStream inputStream, ByteBuffer byteBuffer, int size) throws IOException {
+        int maxSize = byteBuffer.array().length;
         int totalReadBytes = 0;
         while (totalReadBytes != size) {
-            int readBytes = inputStream.read(byteBuffer.array());
+            int readBytes = inputStream.read(byteBuffer.array(), totalReadBytes, maxSize - totalReadBytes);
             if (readBytes == -1) return false;
             totalReadBytes += readBytes;
         }
