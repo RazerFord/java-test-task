@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":client"))
     implementation(project(":servers"))
 }
 
