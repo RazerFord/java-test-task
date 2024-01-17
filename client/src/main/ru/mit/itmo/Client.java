@@ -2,10 +2,10 @@ package ru.mit.itmo;
 
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
+import ru.mit.itmo.arraygenerators.ArrayGenerators;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -13,11 +13,10 @@ import java.util.logging.Logger;
 
 public class Client implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(Client.class.getName());
-    private final Random random = new Random();
     private final String targetAddress;
     private final int targetPort;
-    private final int countNumbers;
     private final int countRequest;
+    private final ArrayGenerators arrayGenerators;
     private final int periodRequest;
     private final MessageReader messageReader = new MessageReader();
     private final MessageSender messageSender = new MessageSender();
@@ -25,13 +24,13 @@ public class Client implements Runnable {
     public Client(
             String targetAddress,
             int targetPort,
-            int countNumbers,
+            ArrayGenerators arrayGenerators,
             int countRequest,
             int periodRequest
     ) {
         this.targetAddress = targetAddress;
         this.targetPort = targetPort;
-        this.countNumbers = countNumbers;
+        this.arrayGenerators = arrayGenerators;
         this.countRequest = countRequest;
         this.periodRequest = periodRequest;
     }
@@ -55,10 +54,7 @@ public class Client implements Runnable {
     }
 
     private MessageOuterClass.@NotNull Message buildRequest() {
-        List<Integer> numbers = new ArrayList<>(countNumbers);
-        for (int i = 0; i < countNumbers; i++) {
-            numbers.add(random.nextInt());
-        }
+        List<Integer> numbers = arrayGenerators.generate();
         return MessageOuterClass.Message.newBuilder().addAllNumber(numbers).build();
     }
 

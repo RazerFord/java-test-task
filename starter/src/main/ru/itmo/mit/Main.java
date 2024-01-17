@@ -2,6 +2,7 @@ package ru.itmo.mit;
 
 import ru.itmo.mit.blockingserver.BlockingServer;
 import ru.mit.itmo.Client;
+import ru.mit.itmo.arraygenerators.IncreasingArrayGenerators;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,7 +22,9 @@ public class Main {
             }
         }).start();
 
-        Client client = new Client("0.0.0.0", 8081, 100_000, 100, 0);
+        var gen = new IncreasingArrayGenerators(0, 1000, 11);
+
+        Client client = new Client("0.0.0.0", 8081, gen, 100, 0);
         client.run();
 
         try {
