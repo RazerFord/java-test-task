@@ -1,5 +1,9 @@
 package ru.mit.itmo.waiting;
 
-public interface Waiting {
+import java.time.Duration;
 
+public interface Waiting {
+    void trySleep() throws InterruptedException;
+
+    void update(Duration lastRequestTime);
 }

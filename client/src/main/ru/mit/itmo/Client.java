@@ -3,6 +3,7 @@ package ru.mit.itmo;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
 import ru.mit.itmo.arraygenerators.ArrayGenerators;
+import ru.mit.itmo.waiting.Waiting;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -19,21 +20,20 @@ public class Client implements Runnable {
     private final int targetPort;
     private final int countRequest;
     private final ArrayGenerators arrayGenerators;
-    private final Duration periodRequest;
-    private Duration lastRequestTime = Duration.ZERO;
+    private final Waiting waiting;
 
     public Client(
             String targetAddress,
             int targetPort,
             ArrayGenerators arrayGenerators,
             int countRequest,
-            int periodRequest // ms
+            Waiting waiting
     ) {
         this.targetAddress = targetAddress;
         this.targetPort = targetPort;
         this.arrayGenerators = arrayGenerators;
         this.countRequest = countRequest;
-        this.periodRequest = Duration.ofMillis(periodRequest);
+        this.waiting = waiting;
     }
 
     @Override
@@ -44,11 +44,11 @@ public class Client implements Runnable {
                 var inputStream = socket.getInputStream()
         ) {
             for (int i = 0; i < countRequest; i++) {
-                trySleep();
+                waiting.trySleep();
                 var message = buildRequest();
                 messageSender.send(message, outputStream);
                 message = messageReader.read(inputStream);
-                lastRequestTime = Duration.ofMillis(System.currentTimeMillis());
+                waiting.update(Duration.ofMillis(System.currentTimeMillis()));
                 checkSortingList(message.getNumberList());
             }
         } catch (IOException | InterruptedException e) {
@@ -66,17 +66,6 @@ public class Client implements Runnable {
             if (numbers.get(i - 1) > numbers.get(i)) {
                 throw LIST_NOT_SORTED;
             }
-        }
-    }
-
-    private void trySleep() throws InterruptedException {
-        Duration currTime = Duration.ofMillis(System.currentTimeMillis());
-        Duration endSleepTime = lastRequestTime.plus(periodRequest);
-        Duration diff = endSleepTime.minus(currTime);
-        while (diff.isPositive()) {
-            Thread.sleep(diff);
-            currTime = Duration.ofMillis(System.currentTimeMillis());
-            diff = endSleepTime.minus(currTime);
         }
     }
 
