@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.ShutdownChannelGroupException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -12,9 +13,16 @@ public class AcceptCallback implements CompletionHandler<AsynchronousSocketChann
 
     @Override
     public void completed(@NotNull AsynchronousSocketChannel result, @NotNull AsyncHandler attachment) {
-        attachment.setAsyncSocketChannel(result);
-        attachment.asyncRead();
-        System.out.println("SUCCESS");
+        try {
+            var asyncServerSocketChannel = attachment.getAsyncServerSocketChannel();
+            if (asyncServerSocketChannel.isOpen()) {
+                asyncServerSocketChannel.accept(attachment.copy(), new AcceptCallback());
+            }
+            attachment.setAsyncSocketChannel(result);
+            attachment.asyncRead();
+        } catch (ShutdownChannelGroupException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+        }
     }
 
     @Override

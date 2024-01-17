@@ -4,8 +4,12 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import ru.itmo.mit.MessageOuterClass;
 
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 public class AsyncHandler {
@@ -14,10 +18,34 @@ public class AsyncHandler {
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
     private final ExecutorService executorService;
+    private final AsynchronousServerSocketChannel asyncServerSocketChannel;
+    private final AsyncServer asyncServer;
     private AsynchronousSocketChannel asyncSocketChannel;
 
-    public AsyncHandler(ExecutorService executorService) {
+    public AsyncHandler(
+            ExecutorService executorService,
+            AsynchronousServerSocketChannel asyncServerSocketChannel,
+            AsyncServer asyncServer
+    ) {
         this.executorService = executorService;
+        this.asyncServerSocketChannel = asyncServerSocketChannel;
+        this.asyncServer = asyncServer;
+    }
+
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
+
+    public AsyncServer getAsyncServer() {
+        return asyncServer;
+    }
+
+    public AsynchronousServerSocketChannel getAsyncServerSocketChannel() {
+        return asyncServerSocketChannel;
+    }
+
+    public ByteBuffer getReadBuffer() {
+        return readBuffer;
     }
 
     public void setAsyncSocketChannel(AsynchronousSocketChannel asyncSocketChannel) {
@@ -28,35 +56,51 @@ public class AsyncHandler {
         asyncSocketChannel.read(readBuffer, this, new ReadCallback());
     }
 
-    public void process() throws InvalidProtocolBufferException {
-        if (!readBuffer.hasRemaining() || sizeMessage > readBuffer.position()) {
+    public void asyncWrite() throws InvalidProtocolBufferException {
+        readBuffer.flip();
+        var message = MessageOuterClass.Message.parseFrom(readBuffer);
+        readBuffer.position(sizeMessage);
+        readBuffer.compact();
+        sizeMessage = -1;
+        executorService.execute(() -> handle(message.getNumberList()));
+    }
+
+    public Status check() {
+        int readBytes = readBuffer.position();
+        if (!readBuffer.hasRemaining() || sizeMessage > readBytes) {
             increaseReadBufferAfterCompact();
         }
 
-        int readBytes = readBuffer.position();
-
         if (sizeMessage == -1) {
-            if (readBytes < Integer.BYTES) return;
+            if (readBytes < Integer.BYTES) return Status.READ;
             sizeMessage = readBuffer.flip().getInt();
             readBuffer.compact();
         }
 
         if (messageReady()) {
-            readBuffer.flip();
-            var message = MessageOuterClass.Message.parseFrom(readBuffer);
-//            threadPool.execute(() -> handle(message.getNumberList()));
-            readBuffer.position(sizeMessage);
-            readBuffer.compact();
-            sizeMessage = -1;
+            return Status.WRITE;
         }
+        return Status.READ;
     }
 
-    public ByteBuffer getReadBuffer() {
-        return readBuffer;
+    public AsyncHandler copy() {
+        return new AsyncHandler(executorService, asyncServerSocketChannel, asyncServer);
+    }
+
+    private void handle(List<Integer> numbers) {
+        var numbers1 = new ArrayList<>(numbers);
+        Collections.sort(numbers1);
+        MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
+        final int size = message.getSerializedSize();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);
+        byteBuffer.putInt(size).put(message.toByteArray());
+        byteBuffer.flip();
+        asyncSocketChannel.write(byteBuffer, this, new WriteCallback());
+        asyncRead();
     }
 
     private boolean messageReady() {
-        return sizeMessage <= readBuffer.position();
+        return sizeMessage != -1 && sizeMessage <= readBuffer.position();
     }
 
     private void increaseReadBufferAfterCompact() {
@@ -64,5 +108,10 @@ public class AsyncHandler {
         ByteBuffer newByteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer.array(), newSizeBuffer));
         newByteBuffer.position(readBuffer.position());
         readBuffer = newByteBuffer;
+    }
+
+    public enum Status {
+        READ,
+        WRITE,
     }
 }
