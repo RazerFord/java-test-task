@@ -68,29 +68,26 @@ public class Client implements Runnable {
     }
 
     private MessageOuterClass.@NotNull Message read(InputStream inputStream) throws IOException {
-        var size = buffer.capacity();
-        int totalRead = 0;
-        while (totalRead < Integer.BYTES) {
-            int read = inputStream.read(buffer.array(), totalRead, size - totalRead);
-            if (read == -1) throw END_STREAM;
-            if (read == 0) increaseBuffer();
-            totalRead += read;
-        }
+        int totalRead = readAtLeastNBytes(inputStream, 0, Integer.BYTES);
         buffer.position(totalRead);
-        size = buffer.flip().getInt();
-        buffer.compact();
-        totalRead -= Integer.BYTES;
-        while (totalRead < size) {
-            int read = inputStream.read(buffer.array(), totalRead, size - totalRead);
-            if (read == -1) throw END_STREAM;
-            if (read == 0) increaseBuffer();
-            totalRead += read;
-        }
-        buffer.position(totalRead);
-        buffer.flip();
+        var size = buffer.flip().getInt();
+        totalRead += readAtLeastNBytes(inputStream, totalRead, size);
+        buffer.position(Integer.BYTES);
+        buffer.limit(totalRead);
         MessageOuterClass.Message message = MessageOuterClass.Message.parseFrom(buffer);
         buffer.clear();
         return message;
+    }
+
+    private int readAtLeastNBytes(InputStream inputStream, int readBytes, int countBytes) throws IOException {
+        int oldReadBytes = readBytes;
+        while (readBytes < countBytes) {
+            int read = inputStream.read(buffer.array(), readBytes, buffer.capacity() - readBytes);
+            if (read == -1) throw END_STREAM;
+            if (read == 0) increaseBuffer();
+            readBytes += read;
+        }
+        return readBytes - oldReadBytes;
     }
 
     private MessageOuterClass.@NotNull Message buildRequest() {
@@ -106,6 +103,7 @@ public class Client implements Runnable {
     }
 
     private void increaseBuffer(int factor) {
+        factor = (int) Math.pow(FACTOR, Math.ceil(Math.log(factor) / Math.log(FACTOR)));
         int newSizeBuffer = factor * buffer.capacity();
         ByteBuffer newByte = ByteBuffer.wrap(Arrays.copyOf(buffer.array(), newSizeBuffer));
         newByte.position(buffer.position());
