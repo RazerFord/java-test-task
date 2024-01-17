@@ -21,7 +21,7 @@ public class Main {
             }
         }).start();
 
-        Client client = new Client("0.0.0.0", 8081, 10, 10, 0);
+        Client client = new Client("0.0.0.0", 8081, 10, 1, 0);
         client.run();
 
         try {

@@ -46,10 +46,12 @@ public class Client implements Runnable {
                 var outputStream = socket.getOutputStream();
                 var inputStream = socket.getInputStream()
         ) {
-            var message = buildRequest();
-            send(message, outputStream);
-            message = read(inputStream);
-            checkSortingList(message.getNumberList());
+            for (int i = 0; i < countRequest; i++) {
+                var message = buildRequest();
+                send(message, outputStream);
+                message = read(inputStream);
+                checkSortingList(message.getNumberList());
+            }
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
         }
@@ -57,10 +59,11 @@ public class Client implements Runnable {
 
     private void send(MessageOuterClass.@NotNull Message message, OutputStream outputStream) throws IOException {
         final int size = message.getSerializedSize();
+        final int totalSize = Integer.BYTES + size;
         final int capacity = buffer.capacity();
-        if (capacity < Integer.BYTES + size) increaseBuffer((Integer.BYTES + size + capacity - 1) / capacity);
+        if (capacity < totalSize) increaseBuffer((totalSize + capacity - 1) / capacity);
         buffer.putInt(size).put(message.toByteArray());
-        outputStream.write(buffer.array());
+        outputStream.write(buffer.array(), 0, totalSize);
         buffer.clear();
     }
 
@@ -80,6 +83,7 @@ public class Client implements Runnable {
             if (read == -1) throw END_STREAM;
             totalRead += read;
         }
+        buffer.flip();
         MessageOuterClass.Message message = MessageOuterClass.Message.parseFrom(buffer);
         buffer.clear();
         return message;
