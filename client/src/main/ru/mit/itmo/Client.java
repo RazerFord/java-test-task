@@ -68,19 +68,22 @@ public class Client implements Runnable {
     }
 
     private MessageOuterClass.@NotNull Message read(InputStream inputStream) throws IOException {
+        var size = buffer.capacity();
         int totalRead = 0;
         while (totalRead < Integer.BYTES) {
-            int read = inputStream.read(buffer.array());
+            int read = inputStream.read(buffer.array(), totalRead, size - totalRead);
             if (read == -1) throw END_STREAM;
+            if (read == 0) increaseBuffer();
             totalRead += read;
         }
         buffer.position(totalRead);
-        final var size = buffer.flip().getInt();
+        size = buffer.flip().getInt();
         buffer.compact();
         totalRead -= Integer.BYTES;
         while (totalRead < size) {
             int read = inputStream.read(buffer.array(), totalRead, size - totalRead);
             if (read == -1) throw END_STREAM;
+            if (read == 0) increaseBuffer();
             totalRead += read;
         }
         buffer.position(totalRead);
