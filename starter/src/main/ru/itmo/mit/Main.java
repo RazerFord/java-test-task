@@ -33,7 +33,7 @@ public class Main {
         System.out.println(buffer.getInt());
         System.out.println(buffer.getInt());
         int i = 0;
-        try (Socket socket = new Socket("localhost", 8081);
+        try (Socket socket = new Socket("0.0.0.0", 8081);
              InputStream inputStream = socket.getInputStream();
              OutputStream outputStream = socket.getOutputStream()) {
             while (i++ < 10) {
@@ -67,14 +67,14 @@ public class Main {
                 for (int f : message.getNumberList()) {
                     System.out.printf("%s ", f);
                 }
-                try {
-                    server.close();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
             }
         }
         System.out.println("END");
+        try {
+            server.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static boolean read(InputStream inputStream, ByteBuffer byteBuffer, int size) throws IOException {
