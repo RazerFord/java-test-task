@@ -5,17 +5,20 @@ import ru.itmo.mit.blockingserver.BlockingServer;
 import ru.itmo.mit.nonblockingserver.NonBlockingServer;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.IncreasingArrayGenerators;
+import ru.mit.itmo.waiting.DefaultWaiting;
+import ru.mit.itmo.waiting.IncreasingWaiting;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Arrays;
 
 // Press Shift twice to open the Search Everywhere dialog and type `show whitespaces`,
 // then press Enter. You can now see whitespace characters in your code.
 public class Main {
-    public static void main(String[] args) throws IOException {
-        var server = new NonBlockingServer(8081);
+    public static void main(String[] args) throws IOException, InterruptedException {
+        var server = new BlockingServer(8081);
         new Thread(() -> {
             try {
                 server.start();
@@ -24,10 +27,20 @@ public class Main {
             }
         }).start();
 
-        var gen = new IncreasingArrayGenerators(0, 1000, 11);
+        var gen = new IncreasingArrayGenerators(0, 10000, 110);
+        var waiting = new DefaultWaiting(Duration.ZERO);
 
-        Client client = new Client("0.0.0.0", 8081, gen, 100, 10);
-        client.run();
+        Thread[] threads = new Thread[10];
+
+        for (int i = 0; i < 10; i++) {
+            Client client = new Client("0.0.0.0", 8081, gen, 100, waiting);
+            var t = new Thread(client);
+            threads[i] = t;
+            t.start();
+        }
+        for (int i = 0; i < 10; i++) {
+            threads[i].join();
+        }
 
         try {
             server.close();
