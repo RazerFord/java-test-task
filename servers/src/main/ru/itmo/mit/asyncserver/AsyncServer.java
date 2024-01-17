@@ -21,7 +21,6 @@ public class AsyncServer implements Server, AutoCloseable {
     private final Condition acceptCond = acceptLock.newCondition();
     private final InetSocketAddress inetSocketAddress;
     private final int numberThreads;
-    private AsynchronousServerSocketChannel serverChannel;
     private boolean closed;
 
     public AsyncServer(int serverPort) {
@@ -38,11 +37,10 @@ public class AsyncServer implements Server, AutoCloseable {
         try (var threadPool = Executors.newFixedThreadPool(numberThreads)) {
             AsynchronousChannelGroup channelGroup = AsynchronousChannelGroup.withThreadPool(threadPool);
 
-            try (var serverChannel1 = AsynchronousServerSocketChannel.open(channelGroup)) {
-                serverChannel = serverChannel1;
-                serverChannel1.bind(inetSocketAddress);
+            try (var serverChannel = AsynchronousServerSocketChannel.open(channelGroup)) {
+                serverChannel.bind(inetSocketAddress);
 
-                serverChannel1.accept(new AsyncHandler(threadPool, serverChannel1, this), AcceptCallback.INSTANCE);
+                serverChannel.accept(new AsyncHandler(threadPool, serverChannel, this), AcceptCallback.INSTANCE);
 
                 acceptLock.lock();
                 while (!closed && !Thread.currentThread().isInterrupted()) {
@@ -51,8 +49,9 @@ public class AsyncServer implements Server, AutoCloseable {
                 acceptLock.unlock();
             } catch (InterruptedException e) {
                 LOGGER.log(Level.WARNING, e.getMessage());
-            } finally {
-                if (channelGroup != null) channelGroup.shutdown();
+            }
+            if (channelGroup != null) {
+                channelGroup.shutdownNow();
             }
         } catch (ShutdownChannelGroupException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
@@ -60,10 +59,9 @@ public class AsyncServer implements Server, AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         acceptLock.lock();
         closed = true;
-        if (serverChannel != null) serverChannel.close();
         acceptCond.signal();
         acceptLock.unlock();
     }
