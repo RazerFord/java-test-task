@@ -105,7 +105,7 @@ public class ChannelHandler {
     }
 
     private boolean messageReady() {
-        return sizeMessage <= readBuffer.position();
+        return sizeMessage != -1 && sizeMessage <= readBuffer.position();
     }
 
     private void handle(List<Integer> numbers) {

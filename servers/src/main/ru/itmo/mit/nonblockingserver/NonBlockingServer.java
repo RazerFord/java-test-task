@@ -34,6 +34,7 @@ public class NonBlockingServer implements Server, AutoCloseable {
     @Override
     public void start() throws IOException {
         socketChannel = ServerSocketChannel.open();
+        socketChannel.socket().bind(inetAddress);
 
         try (
                 var socketChannel1 = socketChannel;
@@ -41,8 +42,6 @@ public class NonBlockingServer implements Server, AutoCloseable {
                 var writeSelector = Selector.open();
                 var threadPool = Executors.newFixedThreadPool(numberThreads)
         ) {
-            socketChannel1.socket().bind(inetAddress);
-
             SelectorReader selectorReader = new SelectorReader(readSelector);
             Thread threadSelectorReader = new Thread(selectorReader);
             threadSelectorReader.start();
