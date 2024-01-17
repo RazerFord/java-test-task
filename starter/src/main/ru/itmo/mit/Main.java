@@ -1,6 +1,8 @@
 package ru.itmo.mit;
 
+import ru.itmo.mit.asyncserver.AsyncServer;
 import ru.itmo.mit.blockingserver.BlockingServer;
+import ru.itmo.mit.nonblockingserver.NonBlockingServer;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.IncreasingArrayGenerators;
 
@@ -13,7 +15,7 @@ import java.util.Arrays;
 // then press Enter. You can now see whitespace characters in your code.
 public class Main {
     public static void main(String[] args) throws IOException {
-        var server = new BlockingServer(8081);
+        var server = new NonBlockingServer(8081);
         new Thread(() -> {
             try {
                 server.start();
@@ -24,7 +26,7 @@ public class Main {
 
         var gen = new IncreasingArrayGenerators(0, 1000, 11);
 
-        Client client = new Client("0.0.0.0", 8081, gen, 100, 0);
+        Client client = new Client("0.0.0.0", 8081, gen, 100, 10);
         client.run();
 
         try {
