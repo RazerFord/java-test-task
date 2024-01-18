@@ -27,18 +27,18 @@ public class Main {
             }
         }).start();
 
-        var gen = new IncreasingArrayGenerators(0, 10000, 110);
+        var gen = new IncreasingArrayGenerators(10, 10000, 100);
         var waiting = new DefaultWaiting(Duration.ZERO);
 
         Thread[] threads = new Thread[10];
 
         for (int i = 0; i < 10; i++) {
-            Client client = new Client("0.0.0.0", 8081, gen, 100, waiting);
+            Client client = new Client("0.0.0.0", 8081, gen, 10, waiting);
             var t = new Thread(client);
             threads[i] = t;
             t.start();
         }
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
             threads[i].join();
         }
 

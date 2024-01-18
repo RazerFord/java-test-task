@@ -13,14 +13,17 @@ public class MessageReader {
     private ByteBuffer buffer = ByteBuffer.allocate(INITIAL_BUFFER_SIZE);
 
     public MessageOuterClass.@NotNull Message read(InputStream inputStream) throws IOException {
-        int totalRead = readAtLeastNBytes(inputStream, 0, Integer.BYTES);
+        int totalRead = buffer.position();
+        totalRead += readAtLeastNBytes(inputStream, totalRead, Integer.BYTES);
         buffer.position(totalRead);
-        var size = buffer.flip().getInt();
+        var size = buffer.flip().getInt() + Integer.BYTES;
         totalRead += readAtLeastNBytes(inputStream, totalRead, size);
         buffer.position(Integer.BYTES);
-        buffer.limit(totalRead);
+        buffer.limit(size);
         MessageOuterClass.Message message = MessageOuterClass.Message.parseFrom(buffer);
-        buffer.clear();
+        buffer.position(size);
+        buffer.compact();
+        buffer.position(totalRead - size);
         return message;
     }
 

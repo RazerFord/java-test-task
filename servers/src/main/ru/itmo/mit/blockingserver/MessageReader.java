@@ -32,7 +32,7 @@ public class MessageReader {
     private int readAtLeastNBytes(InputStream inputStream, int readBytes, int countBytes) throws IOException {
         int oldReadBytes = readBytes;
         while (readBytes < countBytes) {
-            int read = inputStream.read(buffer.array(), readBytes, Integer.min(buffer.capacity(), countBytes) - readBytes);
+            int read = inputStream.read(buffer.array(), readBytes, buffer.capacity() - readBytes);
             if (read == -1) throw END_STREAM;
             if (read == 0) increaseBuffer();
             readBytes += read;

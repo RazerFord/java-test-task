@@ -51,7 +51,7 @@ public class Client implements Runnable {
                 waiting.update(Duration.ofMillis(System.currentTimeMillis()));
                 checkSortingList(message.getNumberList());
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException | InterruptedException | ClientException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
         }
     }

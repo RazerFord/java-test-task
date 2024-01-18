@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,7 +41,7 @@ public class Handler implements Runnable {
                 var message = messageReader.read(inputStream);
                 executorService.execute(() -> handle(message.getNumberList(), outputStream, sender));
             }
-        } catch (IOException | ServerException e) {
+        } catch (IOException | ServerException | RejectedExecutionException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
         }
     }
