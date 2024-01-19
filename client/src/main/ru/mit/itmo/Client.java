@@ -3,6 +3,7 @@ package ru.mit.itmo;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
 import ru.mit.itmo.arraygenerators.ArrayGenerators;
+import ru.mit.itmo.guard.Guard;
 import ru.mit.itmo.waiting.Waiting;
 
 import java.io.IOException;
@@ -21,19 +22,22 @@ public class Client implements Runnable {
     private final int countRequest;
     private final ArrayGenerators arrayGenerators;
     private final Waiting waiting;
+    private final Guard guard;
 
     public Client(
             String targetAddress,
             int targetPort,
-            ArrayGenerators arrayGenerators,
             int countRequest,
-            Waiting waiting
+            ArrayGenerators arrayGenerators,
+            Waiting waiting,
+            Guard guard
     ) {
         this.targetAddress = targetAddress;
         this.targetPort = targetPort;
-        this.arrayGenerators = arrayGenerators;
         this.countRequest = countRequest;
+        this.arrayGenerators = arrayGenerators;
         this.waiting = waiting;
+        this.guard = guard;
     }
 
     @Override
@@ -53,6 +57,7 @@ public class Client implements Runnable {
             }
         } catch (IOException | InterruptedException | ClientException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
+            Thread.currentThread().interrupt();
         }
     }
 
