@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class NonBlockingServer implements Server, AutoCloseable {
+public class NonBlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(NonBlockingServer.class.getName());
     private static final int NUMBER_THREADS = 10;
     private final SocketAddress inetAddress;
@@ -32,10 +32,17 @@ public class NonBlockingServer implements Server, AutoCloseable {
     }
 
     @Override
-    public void start() throws IOException {
-        socketChannel = ServerSocketChannel.open();
-        socketChannel.socket().bind(inetAddress);
+    public void run() {
+        try {
+            socketChannel = ServerSocketChannel.open();
+            socketChannel.socket().bind(inetAddress);
+            run(socketChannel);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+        }
+    }
 
+    public void run(ServerSocketChannel socketChannel) throws IOException {
         try (
                 var socketChannel1 = socketChannel;
                 var readSelector = Selector.open();
@@ -60,7 +67,7 @@ public class NonBlockingServer implements Server, AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         closed = true;
         if (socketChannel != null) socketChannel.close();
     }

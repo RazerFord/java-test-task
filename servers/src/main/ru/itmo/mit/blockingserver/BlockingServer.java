@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class BlockingServer implements Server, AutoCloseable {
+public class BlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(BlockingServer.class.getName());
     private static final int NUMBER_THREADS = 10;
     private final int serverPort;
@@ -27,10 +27,20 @@ public class BlockingServer implements Server, AutoCloseable {
     }
 
     @Override
-    public void start() throws IOException {
-        socket = new ServerSocket(serverPort);
-        try (var socket1 = socket;
-             var threadPool = Executors.newFixedThreadPool(numberThreads)) {
+    public void run() {
+        try {
+            socket = new ServerSocket(serverPort);
+            run(socket);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+        }
+    }
+
+    private void run(ServerSocket socket) throws IOException {
+        try (
+                var socket1 = socket;
+                var threadPool = Executors.newFixedThreadPool(numberThreads)
+        ) {
             while (!closed && !socket1.isClosed() && !Thread.currentThread().isInterrupted()) {
                 var port = socket1.accept();
                 Thread thread = new Thread(new Handler(port, threadPool));
@@ -43,7 +53,7 @@ public class BlockingServer implements Server, AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         closed = true;
         if (socket != null && !socket.isClosed()) socket.close();
     }

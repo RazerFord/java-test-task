@@ -1,7 +1,6 @@
 package ru.itmo.mit;
 
-import java.io.IOException;
+import java.io.Closeable;
 
-public interface Server {
-    void start() throws IOException;
+public interface Server extends Runnable, Closeable {
 }
