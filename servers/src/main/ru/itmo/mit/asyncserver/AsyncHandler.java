@@ -2,13 +2,13 @@ package ru.itmo.mit.asyncserver;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import ru.itmo.mit.MessageOuterClass;
+import ru.itmo.mit.Utils;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
@@ -81,7 +81,7 @@ public class AsyncHandler {
 
     private void handleRead(List<Integer> numbers) {
         var numbers1 = new ArrayList<>(numbers);
-        Collections.sort(numbers1);
+        Utils.bubbleSort(numbers1);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         while (writeBuffer.capacity() < size + Integer.BYTES) increaseWriteBufferInWriteMode();

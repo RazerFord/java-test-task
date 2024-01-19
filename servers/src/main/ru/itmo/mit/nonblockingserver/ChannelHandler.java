@@ -110,7 +110,7 @@ public class ChannelHandler {
 
     private void handle(List<Integer> numbers) {
         var numbers1 = new ArrayList<>(numbers);
-        Collections.sort(numbers1);
+        Utils.bubbleSort(numbers1);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);

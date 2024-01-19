@@ -10,7 +10,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,7 +47,7 @@ public class Handler implements Runnable {
 
     private void handle(List<Integer> numbers, OutputStream outputStream, @NotNull ExecutorService sender) {
         var numbers1 = new ArrayList<>(numbers);
-        Collections.sort(numbers1);
+        Utils.bubbleSort(numbers1);
         sender.execute(() -> {
             MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
             final int size = message.getSerializedSize();
