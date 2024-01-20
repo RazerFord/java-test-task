@@ -63,6 +63,7 @@ public class Client implements Runnable {
                 checkSortingList(message.getNumberList());
                 guard.release();
             }
+            if (countRequest == 0) guard.release();
         } catch (IOException | InterruptedException | ClientException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
             Thread.currentThread().interrupt();

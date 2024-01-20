@@ -64,19 +64,20 @@ public class SelectOtherParameters implements StrategyCLI {
             case 1 -> {
                 countClients = other1;
                 generatorsSupplier = () -> new IncreasingArrayGenerators(from, to, step);
-                guardSupplier = DefaultGuard::new;
+                guardSupplier = () -> DefaultGuard.INSTANCE;
                 waitingSupplier = () -> new DefaultWaiting(Duration.ofMillis(other2));
             }
             case 2 -> {
                 countClients = to;
                 generatorsSupplier = () -> new DefaultArrayGenerators(other1);
-                guardSupplier = () -> new StrictGuard(from, to, step);
+                var strictGuard = new StrictGuard(from, to, step);
+                guardSupplier = () -> strictGuard;
                 waitingSupplier = () -> new DefaultWaiting(Duration.ofMillis(other2));
             }
             case 3 -> {
                 countClients = other2;
                 generatorsSupplier = () -> new DefaultArrayGenerators(other1);
-                guardSupplier = DefaultGuard::new;
+                guardSupplier = () -> DefaultGuard.INSTANCE;
                 waitingSupplier = () -> new IncreasingWaiting(Duration.ofMillis(from), Duration.ofMillis(to), Duration.ofMillis(step));
             }
             default -> throw new IllegalArgumentException(SELECTION_ERROR);
