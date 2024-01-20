@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.Server;
 import ru.mit.itmo.Client;
+import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
 import ru.mit.itmo.guard.DefaultGuard;
 import ru.mit.itmo.waiting.DefaultWaiting;
 
@@ -39,7 +40,8 @@ public class SelectOtherParameters implements StrategyCLI {
         int from = scanner.nextInt();
         int to = scanner.nextInt();
         int step = scanner.nextInt();
-        if (from < 0 || to < 0 || from > to || step <= 0) throw new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step");
+        if (from < 0 || to < 0 || from > to || step <= 0)
+            throw new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step");
 
         printStream.printf(Constants.SELECT_OTHER_VALUES, removeElement(Constants.PARAMS, numberParam - 1));
         int other1 = scanner.nextInt();
@@ -49,7 +51,8 @@ public class SelectOtherParameters implements StrategyCLI {
 
         var builderClient = Client.builder()
                 .setTargetAddress(Constants.ADDRESS)
-                .setTargetPort(Constants.PORT);
+                .setTargetPort(Constants.PORT)
+                .setCountRequest(countRequests);
 
         return switch (numberParam) {
             case 1 -> {
@@ -57,12 +60,17 @@ public class SelectOtherParameters implements StrategyCLI {
 
                 builderClient
                         .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)))
-                        .setGuardSupplier(() -> guard)
-                        .setCountRequest(countRequests);
+                        .setGuardSupplier(() -> guard);
 
                 yield new LaunchBenchChangingArrayLengthStrategy(printStream, server, from, to, step, other1, builderClient);
             }
-            case 2 -> null;
+            case 2 -> {
+                builderClient
+                        .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
+                        .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
+
+                yield new LaunchBenchNumberClientsStrategy(printStream, server, from, to, step, builderClient);
+            }
 
             case 3 -> null;
 
