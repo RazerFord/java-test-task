@@ -1,5 +1,7 @@
 package ru.itmo.mit.cli;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.ExitException;
 
 import java.io.InputStream;
@@ -33,6 +35,11 @@ public class CLI {
                 break;
             }
         }
+    }
+
+    @Contract(" -> new")
+    public static @NotNull CLI create() {
+        return new CLI();
     }
 
     private static final String INCORRECT_PARAMETER = "Incorrect parameter";
