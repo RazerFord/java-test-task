@@ -2,11 +2,13 @@ package ru.itmo.mit.asyncserver;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import ru.itmo.mit.MessageOuterClass;
+import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.Utils;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,16 +24,19 @@ public class AsyncHandler {
     private final ExecutorService executorService;
     private final AsynchronousServerSocketChannel asyncServerSocketChannel;
     private final AsyncServer asyncServer;
+    private final StatisticsRecorder statisticsRecorder;
     private AsynchronousSocketChannel asyncSocketChannel;
 
     public AsyncHandler(
             ExecutorService executorService,
             AsynchronousServerSocketChannel asyncServerSocketChannel,
-            AsyncServer asyncServer
+            AsyncServer asyncServer,
+            StatisticsRecorder statisticsRecorder
     ) {
         this.executorService = executorService;
         this.asyncServerSocketChannel = asyncServerSocketChannel;
         this.asyncServer = asyncServer;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     public void asyncRead() {
@@ -45,10 +50,14 @@ public class AsyncHandler {
     public void handleRead() throws InvalidProtocolBufferException {
         readBuffer.flip();
         var message = MessageOuterClass.Message.parseFrom(readBuffer);
+        var start = Instant.now();
         readBuffer.position(sizeMessage);
         readBuffer.compact();
         sizeMessage = -1;
-        executorService.execute(() -> handleRead(message.getNumberList()));
+        executorService.execute(() -> handleRead(
+                message.getNumberList(),
+                Utils.createActionAfterCompletion(statisticsRecorder, start)
+        ));
     }
 
     public void handleWrite() {
@@ -76,17 +85,18 @@ public class AsyncHandler {
     }
 
     public AsyncHandler copy() {
-        return new AsyncHandler(executorService, asyncServerSocketChannel, asyncServer);
+        return new AsyncHandler(executorService, asyncServerSocketChannel, asyncServer, statisticsRecorder);
     }
 
-    private void handleRead(List<Integer> numbers) {
+    private void handleRead(List<Integer> numbers, Runnable runnable) {
         var numbers1 = new ArrayList<>(numbers);
-        Utils.bubbleSort(numbers1);
+        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder, StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         while (writeBuffer.capacity() < size + Integer.BYTES) increaseWriteBufferInWriteMode();
         writeBuffer.putInt(size).put(message.toByteArray());
         writeBuffer.flip();
+        runnable.run();
         asyncWrite();
     }
 

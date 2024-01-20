@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +41,8 @@ public class Handler implements Runnable {
                 var sender = Executors.newSingleThreadExecutor()
         ) {
             while (!socket1.isClosed() && !Thread.currentThread().isInterrupted()) {
-                var start = Instant.now();
                 var message = messageReader.read(inputStream);
+                var start = Instant.now();
                 executorService.execute(() -> handle(message.getNumberList(),
                         outputStream,
                         sender,
@@ -57,10 +56,7 @@ public class Handler implements Runnable {
 
     private void handle(List<Integer> numbers, OutputStream outputStream, @NotNull ExecutorService sender, Runnable actionAfterCompletion) {
         var numbers1 = new ArrayList<>(numbers);
-        var start = Instant.now();
-        Utils.bubbleSort(numbers1);
-        var end = Instant.now();
-        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
+        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder, StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
         sender.execute(() -> {
             MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
             final int size = message.getSerializedSize();

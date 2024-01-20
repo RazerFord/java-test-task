@@ -12,7 +12,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -124,10 +123,7 @@ public class ChannelHandler {
 
     private void handle(List<Integer> numbers, Runnable actionAfterCompletion) {
         var numbers1 = new ArrayList<>(numbers);
-        var start = Instant.now();
-        Utils.bubbleSort(numbers1);
-        var end = Instant.now();
-        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
+        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder, StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);

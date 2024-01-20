@@ -43,7 +43,10 @@ public class Utils {
     }
 
     @Contract(pure = true)
-    public static @NotNull Runnable createActionAfterCompletion(StatisticsRecorder statisticsRecorder, Instant start) {
+    public static @NotNull Runnable createActionAfterCompletion(
+            StatisticsRecorder statisticsRecorder,
+            Instant start
+    ) {
         Runnable[] runnable = new Runnable[1];
         runnable[0] = () -> {
             var end = Instant.now();
@@ -52,5 +55,16 @@ public class Utils {
             };
         };
         return runnable[0];
+    }
+
+    public static void executeAndMeasureResults(
+            @NotNull Runnable runnable,
+            @NotNull StatisticsRecorder statisticsRecorder,
+            StatisticsRecorder.Selector selector
+    ) {
+        var start = Instant.now();
+        runnable.run();
+        var end = Instant.now();
+        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), selector);
     }
 }

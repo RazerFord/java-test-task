@@ -53,7 +53,7 @@ public class AsyncServer implements Server {
         try (var serverChannel = AsynchronousServerSocketChannel.open(channelGroup)) {
             serverChannel.bind(inetSocketAddress);
 
-            serverChannel.accept(new AsyncHandler(threadPool, serverChannel, this), AcceptCallback.INSTANCE);
+            serverChannel.accept(new AsyncHandler(threadPool, serverChannel, this, statisticsRecorder), AcceptCallback.INSTANCE);
 
             acceptLock.lock();
             while (!closed && !Thread.currentThread().isInterrupted()) {
