@@ -8,7 +8,7 @@ import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
 import java.io.IOException;
 import java.io.PrintStream;
 
-public class LaunchBenchChangingArrayLengthStrategy implements StrategyCLI {
+public class LaunchBenchArrayLengthStrategy implements StrategyCLI {
     private final PrintStream printStream;
     private final Server server;
     private final int fromArrayLength;
@@ -17,7 +17,7 @@ public class LaunchBenchChangingArrayLengthStrategy implements StrategyCLI {
     private final int countClients;
     private final Client.Builder clientBuilder;
 
-    public LaunchBenchChangingArrayLengthStrategy(
+    public LaunchBenchArrayLengthStrategy(
             PrintStream printStream,
             Server server,
             int fromArrayLength,

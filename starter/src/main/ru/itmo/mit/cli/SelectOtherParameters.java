@@ -62,7 +62,7 @@ public class SelectOtherParameters implements StrategyCLI {
                         .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)))
                         .setGuardSupplier(() -> guard);
 
-                yield new LaunchBenchChangingArrayLengthStrategy(printStream, server, from, to, step, other1, builderClient);
+                yield new LaunchBenchArrayLengthStrategy(printStream, server, from, to, step, other1, builderClient);
             }
             case 2 -> {
                 builderClient
@@ -72,7 +72,15 @@ public class SelectOtherParameters implements StrategyCLI {
                 yield new LaunchBenchNumberClientsStrategy(printStream, server, from, to, step, builderClient);
             }
 
-            case 3 -> null;
+            case 3 -> {
+                var guard = new DefaultGuard(other2);
+
+                builderClient
+                        .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
+                        .setGuardSupplier(() -> guard);
+
+                yield new LaunchBenchDelayStrategy(printStream, server, from, to, step, countRequests, builderClient);
+            }
 
             default -> throw new IllegalArgumentException(SELECTION_ERROR);
         };
