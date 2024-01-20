@@ -42,6 +42,13 @@ public class Client implements Runnable {
 
     @Override
     public void run() {
+        try {
+            guard.acquire();
+        } catch (InterruptedException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+            Thread.currentThread().interrupt();
+            return;
+        }
         try (
                 var socket = new Socket(targetAddress, targetPort);
                 var outputStream = socket.getOutputStream();
@@ -54,6 +61,7 @@ public class Client implements Runnable {
                 message = messageReader.read(inputStream);
                 waiting.update(Duration.ofMillis(System.currentTimeMillis()));
                 checkSortingList(message.getNumberList());
+                guard.release();
             }
         } catch (IOException | InterruptedException | ClientException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
