@@ -27,11 +27,13 @@ public class CLI {
             try {
                 strategy = strategy.apply();
             } catch (IllegalArgumentException | InputMismatchException e) {
-                printStream.println(e.getMessage());
+                printStream.println(INCORRECT_PARAMETER);
                 strategy = new ServerArchitectureSelectionStrategy(printStream, new Scanner(inputStream));
             } catch (ExitException ignored) {
                 break;
             }
         }
     }
+
+    private static final String INCORRECT_PARAMETER = "Incorrect parameter";
 }

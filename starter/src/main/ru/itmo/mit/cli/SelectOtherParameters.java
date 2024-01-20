@@ -1,5 +1,7 @@
 package ru.itmo.mit.cli;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.Server;
 import ru.mit.itmo.Client;
@@ -45,10 +47,14 @@ public class SelectOtherParameters implements StrategyCLI {
         int step = scanner.nextInt();
         int from = scanner.nextInt();
         int to = scanner.nextInt();
-
-        printStream.printf(Constants.SELECT_OTHER_VALUES, Constants.PARAMS.toArray());
+        if (from < 0 || to < 0 || from > to || step <= 0) {
+            throw new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step");
+        }
+        printStream.printf(Constants.SELECT_OTHER_VALUES, removeElement(Constants.PARAMS, numberParam - 1));
         int other1 = scanner.nextInt();
+        if (other1 < 0) throw Constants.PARAMETER_NOT_NEGATIVE;
         int other2 = scanner.nextInt();
+        if (other2 < 0) throw Constants.PARAMETER_NOT_NEGATIVE;
 
         int countClients;
         Supplier<ArrayGenerators> generatorsSupplier;
@@ -82,6 +88,16 @@ public class SelectOtherParameters implements StrategyCLI {
             return new Client(Constants.ADDRESS, Constants.PORT, countRequests, generator, waiting, guard);
         };
         return new LaunchingStrategy(printStream, server, countClients, clientSupplier);
+    }
+
+    @Contract(pure = true)
+    private Object @NotNull [] removeElement(Object @NotNull [] array, int index) {
+        Object[] newArray = new Object[array.length - 1];
+        for (int i = 0, j = 0; i < array.length; i++) {
+            if (i == index) continue;
+            newArray[j++] = array[i];
+        }
+        return newArray;
     }
 
     private static final String SELECTION_ERROR = "The parameter number is incorrect";

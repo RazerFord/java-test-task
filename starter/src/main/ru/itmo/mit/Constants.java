@@ -1,14 +1,12 @@
 package ru.itmo.mit;
 
-import java.util.Set;
-
 public class Constants {
     private Constants() {
     }
 
     public static final String ADDRESS = "0.0.0.0";
     public static final int PORT = 8081;
-    public static final Set<String> PARAMS = Set.of("N", "M", "Δ");
+    public static final Object[] PARAMS = {"N", "M", "Δ"};
 
     public static final String SELECT_ARCHITECTURE = """
             Select architecture:
@@ -38,4 +36,6 @@ public class Constants {
             M - Number of working clients
             Δ - Time interval between requests
             """;
+
+    public static final IllegalArgumentException PARAMETER_NOT_NEGATIVE = new IllegalArgumentException("Parameter must not be negative");
 }

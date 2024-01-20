@@ -20,7 +20,7 @@ public class ServerArchitectureSelectionStrategy implements StrategyCLI {
 
     @Override
     public StrategyCLI apply() {
-        printStream.println(Constants.SELECT_ARCHITECTURE);
+        printStream.print(Constants.SELECT_ARCHITECTURE);
         var server = createServer(scanner.nextInt());
         return new SelectingNumberRequestsStrategy(printStream, scanner, server);
     }

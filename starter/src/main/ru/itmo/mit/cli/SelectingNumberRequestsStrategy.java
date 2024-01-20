@@ -24,6 +24,8 @@ public class SelectingNumberRequestsStrategy implements StrategyCLI {
     @Override
     public StrategyCLI apply() {
         printStream.print(Constants.SELECT_NUMBER_REQUESTS);
-        return new SelectOtherParameters(printStream, scanner, server, scanner.nextInt());
+        int countRequests = scanner.nextInt();
+        if (countRequests < 0) throw new IllegalArgumentException("Should be: number of requests >= 0");
+        return new SelectOtherParameters(printStream, scanner, server, countRequests);
     }
 }
