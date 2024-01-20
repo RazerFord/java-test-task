@@ -1,6 +1,7 @@
 package ru.itmo.mit.benchmarks.strategies;
 
 import ru.itmo.mit.Server;
+import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
 
@@ -13,6 +14,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
     private final int stepArrayLength;
     private final int countClients;
     private final Client.Builder clientBuilder;
+    private final StatisticsRecorder statisticsRecorder;
 
     public BenchArrayLengthStrategy(
             Server server,
@@ -20,7 +22,8 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
             int toArrayLength,
             int stepArrayLength,
             int countClients,
-            Client.Builder clientBuilder
+            Client.Builder clientBuilder,
+            StatisticsRecorder statisticsRecorder
     ) {
         this.server = server;
         this.fromArrayLength = fromArrayLength;
@@ -28,6 +31,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
         this.stepArrayLength = stepArrayLength;
         this.countClients = countClients;
         this.clientBuilder = clientBuilder;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     @Override
@@ -38,6 +42,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
 
             Thread[] threadsClient = new Thread[countClients];
             for (int j = fromArrayLength; j <= toArrayLength; j = Integer.min(j + stepArrayLength, toArrayLength)) {
+                statisticsRecorder.updateValue(j);
                 int arrayLength = j;
                 clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(arrayLength));
 

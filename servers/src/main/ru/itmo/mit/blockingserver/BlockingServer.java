@@ -1,6 +1,7 @@
 package ru.itmo.mit.blockingserver;
 
 import ru.itmo.mit.Server;
+import ru.itmo.mit.StatisticsRecorder;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -14,16 +15,18 @@ public class BlockingServer implements Server {
     private static final int NUMBER_THREADS = 10;
     private final int serverPort;
     private final int numberThreads;
+    private final StatisticsRecorder statisticsRecorder;
     private ServerSocket socket;
     private boolean closed;
 
-    public BlockingServer(int serverPort) {
-        this(serverPort, NUMBER_THREADS);
+    public BlockingServer(int serverPort, StatisticsRecorder statisticsRecorder) {
+        this(serverPort, NUMBER_THREADS, statisticsRecorder);
     }
 
-    public BlockingServer(int serverPort, int numberThreads) {
+    public BlockingServer(int serverPort, int numberThreads, StatisticsRecorder statisticsRecorder) {
         this.serverPort = serverPort;
         this.numberThreads = numberThreads;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class BlockingServer implements Server {
         ) {
             while (!closed && !socket1.isClosed() && !Thread.currentThread().isInterrupted()) {
                 var port = socket1.accept();
-                Thread thread = new Thread(new Handler(port, threadPool));
+                Thread thread = new Thread(new Handler(port, threadPool, statisticsRecorder));
                 thread.setDaemon(true);
                 thread.start();
             }

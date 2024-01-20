@@ -1,6 +1,7 @@
 package ru.itmo.mit.nonblockingserver;
 
 import ru.itmo.mit.Server;
+import ru.itmo.mit.StatisticsRecorder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -19,16 +20,18 @@ public class NonBlockingServer implements Server {
     private static final int NUMBER_THREADS = 10;
     private final SocketAddress inetAddress;
     private final int numberThreads;
+    private final StatisticsRecorder statisticsRecorder;
     private ServerSocketChannel socketChannel;
     private boolean closed;
 
-    public NonBlockingServer(int serverPort) {
-        this(serverPort, NUMBER_THREADS);
+    public NonBlockingServer(int serverPort, StatisticsRecorder statisticsRecorder) {
+        this(serverPort, NUMBER_THREADS, statisticsRecorder);
     }
 
-    public NonBlockingServer(int serverPort, int numberThreads) {
+    public NonBlockingServer(int serverPort, int numberThreads, StatisticsRecorder statisticsRecorder) {
         inetAddress = new InetSocketAddress(serverPort);
         this.numberThreads = numberThreads;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     @Override
@@ -59,7 +62,7 @@ public class NonBlockingServer implements Server {
             while (!closed && socketChannel1.isOpen() && !Thread.currentThread().isInterrupted()) {
                 SocketChannel clientSocketChannel = socketChannel1.accept();
                 clientSocketChannel.configureBlocking(false);
-                selectorReader.addAndWakeup(new ChannelHandler(clientSocketChannel, threadPool, selectorWriter));
+                selectorReader.addAndWakeup(new ChannelHandler(clientSocketChannel, threadPool, selectorWriter, statisticsRecorder));
             }
         } catch (SocketException | AsynchronousCloseException e) {
             LOGGER.log(Level.WARNING, e.getMessage());

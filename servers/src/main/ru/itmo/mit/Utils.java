@@ -1,8 +1,11 @@
 package ru.itmo.mit;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,5 +40,17 @@ public class Utils {
                 }
             }
         }
+    }
+
+    @Contract(pure = true)
+    public static @NotNull Runnable createActionAfterCompletion(StatisticsRecorder statisticsRecorder, Instant start) {
+        Runnable[] runnable = new Runnable[1];
+        runnable[0] = () -> {
+            var end = Instant.now();
+            statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_CLIENT);
+            runnable[0] = () -> {
+            };
+        };
+        return runnable[0];
     }
 }

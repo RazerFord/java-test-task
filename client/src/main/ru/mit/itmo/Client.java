@@ -3,6 +3,7 @@ package ru.mit.itmo;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
+import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.arraygenerators.ArrayGenerators;
 import ru.mit.itmo.guard.Guard;
 import ru.mit.itmo.waiting.Waiting;
@@ -10,6 +11,7 @@ import ru.mit.itmo.waiting.Waiting;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -26,6 +28,7 @@ public class Client implements Runnable {
     private final ArrayGenerators arrayGenerators;
     private final Waiting waiting;
     private final Guard guard;
+    private final StatisticsRecorder statisticsRecorder;
 
     private Client(
             String targetAddress,
@@ -33,7 +36,8 @@ public class Client implements Runnable {
             int countRequest,
             ArrayGenerators arrayGenerators,
             Waiting waiting,
-            Guard guard
+            Guard guard,
+            StatisticsRecorder statisticsRecorder
     ) {
         this.targetAddress = targetAddress;
         this.targetPort = targetPort;
@@ -41,6 +45,7 @@ public class Client implements Runnable {
         this.arrayGenerators = arrayGenerators;
         this.waiting = waiting;
         this.guard = guard;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     @Override
@@ -52,6 +57,7 @@ public class Client implements Runnable {
             Thread.currentThread().interrupt();
             return;
         }
+        var start = Instant.now();
         try (
                 var socket = new Socket(targetAddress, targetPort);
                 var outputStream = socket.getOutputStream();
@@ -69,6 +75,8 @@ public class Client implements Runnable {
             LOGGER.log(Level.WARNING, e.getMessage());
             Thread.currentThread().interrupt();
         }
+        var end = Instant.now();
+        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME);
     }
 
     private MessageOuterClass.@NotNull Message buildRequest() {
@@ -96,6 +104,7 @@ public class Client implements Runnable {
         private Supplier<ArrayGenerators> arrayGenerators;
         private Supplier<Waiting> waiting;
         private Supplier<Guard> guard;
+        private Supplier<StatisticsRecorder> statisticsRecorder;
 
         private Builder() {
         }
@@ -130,6 +139,11 @@ public class Client implements Runnable {
             return this;
         }
 
+        public Builder setStatisticsRecorderSupplier(Supplier<StatisticsRecorder> statisticsRecorder) {
+            this.statisticsRecorder = statisticsRecorder;
+            return this;
+        }
+
         public Client build() {
             return new Client(
                     Objects.requireNonNull(targetAddress),
@@ -137,7 +151,8 @@ public class Client implements Runnable {
                     countRequest,
                     Objects.requireNonNull(arrayGenerators).get(),
                     Objects.requireNonNull(waiting).get(),
-                    Objects.requireNonNull(guard).get()
+                    Objects.requireNonNull(guard).get(),
+                    Objects.requireNonNull(statisticsRecorder).get()
             );
         }
     }

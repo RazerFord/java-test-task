@@ -1,6 +1,7 @@
 package ru.itmo.mit.asyncserver;
 
 import ru.itmo.mit.Server;
+import ru.itmo.mit.StatisticsRecorder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -22,15 +23,17 @@ public class AsyncServer implements Server {
     private final Condition acceptCond = acceptLock.newCondition();
     private final InetSocketAddress inetSocketAddress;
     private final int numberThreads;
+    private final StatisticsRecorder statisticsRecorder;
     private boolean closed;
 
-    public AsyncServer(int serverPort) {
-        this(serverPort, NUMBER_THREADS);
+    public AsyncServer(int serverPort, StatisticsRecorder statisticsRecorder) {
+        this(serverPort, NUMBER_THREADS, statisticsRecorder);
     }
 
-    public AsyncServer(int serverPort, int numberThreads) {
+    public AsyncServer(int serverPort, int numberThreads, StatisticsRecorder statisticsRecorder) {
         this.inetSocketAddress = new InetSocketAddress(serverPort);
         this.numberThreads = numberThreads;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     @Override

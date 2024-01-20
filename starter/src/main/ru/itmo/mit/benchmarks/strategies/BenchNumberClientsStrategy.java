@@ -1,6 +1,7 @@
 package ru.itmo.mit.benchmarks.strategies;
 
 import ru.itmo.mit.Server;
+import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.guard.DefaultGuard;
 
@@ -12,19 +13,22 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
     private final int toNumberClients;
     private final int stepNumberClients;
     private final Client.Builder clientBuilder;
+    private final StatisticsRecorder statisticsRecorder;
 
     public BenchNumberClientsStrategy(
             Server server,
             int fromNumberClients,
             int toNumberClients,
             int stepNumberClients,
-            Client.Builder clientBuilder
+            Client.Builder clientBuilder,
+            StatisticsRecorder statisticsRecorder
     ) {
         this.server = server;
         this.fromNumberClients = fromNumberClients;
         this.toNumberClients = toNumberClients;
         this.stepNumberClients = stepNumberClients;
         this.clientBuilder = clientBuilder;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     @Override
@@ -34,6 +38,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
             threadServer.start();
 
             for (int j = fromNumberClients; j <= toNumberClients; j = Integer.min(j + stepNumberClients, toNumberClients)) {
+                statisticsRecorder.updateValue(j);
                 Thread[] threadsClient = new Thread[j];
                 var guard = new DefaultGuard(j);
                 clientBuilder.setGuardSupplier(() -> guard);

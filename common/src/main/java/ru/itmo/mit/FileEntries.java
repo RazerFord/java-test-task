@@ -8,10 +8,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public record FileEntries(
         Queue<String> processingRequest,
-        Queue<String> processingClient
+        Queue<String> processingClient,
+        Queue<String> averageRequestProcessingTime
 ) {
     @Contract(" -> new")
     public static @NotNull FileEntries create() {
-        return new FileEntries(new ConcurrentLinkedQueue<>(), new ConcurrentLinkedQueue<>());
+        return new FileEntries(new ConcurrentLinkedQueue<>(), new ConcurrentLinkedQueue<>(), new ConcurrentLinkedQueue<>());
     }
 }

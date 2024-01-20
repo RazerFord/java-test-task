@@ -1,6 +1,7 @@
 package ru.itmo.mit.benchmarks.strategies;
 
 import ru.itmo.mit.Server;
+import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.waiting.DefaultWaiting;
 
@@ -14,6 +15,7 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
     private final int stepDelay;
     private final int countClients;
     private final Client.Builder clientBuilder;
+    private final StatisticsRecorder statisticsRecorder;
 
     public BenchDelayStrategy(
             Server server,
@@ -21,7 +23,8 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
             int toDelay,
             int stepDelay,
             int countClients,
-            Client.Builder clientBuilder
+            Client.Builder clientBuilder,
+            StatisticsRecorder statisticsRecorder
     ) {
         this.server = server;
         this.fromDelay = fromDelay;
@@ -29,6 +32,7 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
         this.stepDelay = stepDelay;
         this.countClients = countClients;
         this.clientBuilder = clientBuilder;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     @Override
@@ -39,6 +43,7 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
 
             Thread[] threadsClient = new Thread[countClients];
             for (int j = fromDelay; j <= toDelay; j = Integer.min(j + stepDelay, toDelay)) {
+                statisticsRecorder.updateValue(j);
                 int delay = j;
                 clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(delay)));
 

@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.Server;
+import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.asyncserver.AsyncServer;
 import ru.itmo.mit.benchmarks.strategies.BenchArrayLengthStrategy;
 import ru.itmo.mit.benchmarks.strategies.BenchDelayStrategy;
@@ -17,6 +18,7 @@ import ru.mit.itmo.guard.DefaultGuard;
 import ru.mit.itmo.waiting.DefaultWaiting;
 
 import java.time.Duration;
+import java.util.Objects;
 
 public class BenchmarkImpl implements Benchmark {
     private final BenchmarkStrategy benchmarkStrategy;
@@ -36,6 +38,7 @@ public class BenchmarkImpl implements Benchmark {
     }
 
     public static class Builder {
+        private StatisticsRecorder statisticsRecorder;
         private int serverNumber;
         private int countRequests;
         private int numberParam;
@@ -96,14 +99,21 @@ public class BenchmarkImpl implements Benchmark {
             return this;
         }
 
+        public Builder setStatisticsRecorder(StatisticsRecorder statisticsRecorder) {
+            Objects.requireNonNull(statisticsRecorder);
+            this.statisticsRecorder = statisticsRecorder;
+            return this;
+        }
+
         public BenchmarkImpl build() {
             throwIf(from > to, new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step"));
-            var server = createServer(serverNumber);
+            var server = createServer(serverNumber, statisticsRecorder);
 
             var builderClient = Client.builder()
                     .setTargetAddress(Constants.ADDRESS)
                     .setTargetPort(Constants.PORT)
-                    .setCountRequest(countRequests);
+                    .setCountRequest(countRequests)
+                    .setStatisticsRecorderSupplier(() -> statisticsRecorder);
 
             return switch (numberParam) {
                 case 1 -> {
@@ -112,7 +122,7 @@ public class BenchmarkImpl implements Benchmark {
                     builderClient
                             .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)))
                             .setGuardSupplier(() -> guard);
-                    var benchmarkStrategy = new BenchArrayLengthStrategy(server, from, to, step, other1, builderClient);
+                    var benchmarkStrategy = new BenchArrayLengthStrategy(server, from, to, step, other1, builderClient, statisticsRecorder);
 
                     yield new BenchmarkImpl(benchmarkStrategy);
                 }
@@ -121,7 +131,7 @@ public class BenchmarkImpl implements Benchmark {
                             .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
                             .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
 
-                    var benchmarkStrategy = new BenchNumberClientsStrategy(server, from, to, step, builderClient);
+                    var benchmarkStrategy = new BenchNumberClientsStrategy(server, from, to, step, builderClient, statisticsRecorder);
                     yield new BenchmarkImpl(benchmarkStrategy);
                 }
 
@@ -132,7 +142,7 @@ public class BenchmarkImpl implements Benchmark {
                             .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
                             .setGuardSupplier(() -> guard);
 
-                    var benchmarkStrategy = new BenchDelayStrategy(server, from, to, step, other2, builderClient);
+                    var benchmarkStrategy = new BenchDelayStrategy(server, from, to, step, other2, builderClient, statisticsRecorder);
 
                     yield new BenchmarkImpl(benchmarkStrategy);
                 }
@@ -141,11 +151,11 @@ public class BenchmarkImpl implements Benchmark {
             };
         }
 
-        private static Server createServer(int architectureNumber) {
+        private static Server createServer(int architectureNumber, StatisticsRecorder statisticsRecorder) {
             return switch (architectureNumber) {
-                case 1 -> new BlockingServer(Constants.PORT);
-                case 2 -> new NonBlockingServer(Constants.PORT);
-                case 3 -> new AsyncServer(Constants.PORT);
+                case 1 -> new BlockingServer(Constants.PORT, statisticsRecorder);
+                case 2 -> new NonBlockingServer(Constants.PORT, statisticsRecorder);
+                case 3 -> new AsyncServer(Constants.PORT, statisticsRecorder);
                 default -> throw SELECTION_ERROR;
             };
         }

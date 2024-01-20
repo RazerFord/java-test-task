@@ -2,6 +2,8 @@ package ru.itmo.mit.nonblockingserver;
 
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
+import ru.itmo.mit.Pair;
+import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.Utils;
 
 import java.io.IOException;
@@ -10,6 +12,8 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,17 +27,24 @@ public class ChannelHandler {
     private static final String ERR_MSG = "SelectionKey must not be null";
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
-    private final Queue<ByteBuffer> writeBuffers = new LinkedBlockingQueue<>();
+    private final Queue<Pair<ByteBuffer, Runnable>> writeBuffersAndExecutors = new LinkedBlockingQueue<>();
     private final SocketChannel socketChannel;
     private final ExecutorService threadPool;
     private final SelectorWriter selectorWriter;
+    private final StatisticsRecorder statisticsRecorder;
     private SelectionKey selectionKeyRead;
     private SelectionKey selectionKeyWrite;
 
-    public ChannelHandler(SocketChannel socketChannel, ExecutorService threadPool, SelectorWriter selectorWriter) {
+    public ChannelHandler(
+            SocketChannel socketChannel,
+            ExecutorService threadPool,
+            SelectorWriter selectorWriter,
+            StatisticsRecorder statisticsRecorder
+    ) {
         this.socketChannel = socketChannel;
         this.threadPool = threadPool;
         this.selectorWriter = selectorWriter;
+        this.statisticsRecorder = statisticsRecorder;
     }
 
     public void tryRead() throws IOException {
@@ -59,7 +70,8 @@ public class ChannelHandler {
         if (messageReady()) {
             readBuffer.flip();
             var message = MessageOuterClass.Message.parseFrom(readBuffer);
-            threadPool.execute(() -> handle(message.getNumberList()));
+            var start = Instant.now();
+            threadPool.execute(() -> handle(message.getNumberList(), Utils.createActionAfterCompletion(statisticsRecorder, start)));
             readBuffer.position(sizeMessage);
             readBuffer.compact();
             sizeMessage = -1;
@@ -67,7 +79,7 @@ public class ChannelHandler {
     }
 
     public void tryWrite() throws IOException {
-        var head = writeBuffers.peek();
+        var head = writeBuffersAndExecutors.peek();
         // Может быть `null` если два потока добавили буферы
         // в очередь на запись. Один из них добавил себя в
         // очередь на регистрацию к селектору на запись, и вызвал `wakeup`.
@@ -80,16 +92,18 @@ public class ChannelHandler {
             selectionKeyWrite = null;
             return;
         }
+        var byteBuffer = head.first();
+        head.second().run();
         try {
-            socketChannel.write(head);
-            if (!head.hasRemaining()) {
-                writeBuffers.poll();
+            socketChannel.write(byteBuffer);
+            if (!byteBuffer.hasRemaining()) {
+                writeBuffersAndExecutors.poll();
             }
         } catch (IOException e) {
-            writeBuffers.clear();
+            writeBuffersAndExecutors.clear();
             LOGGER.log(Level.WARNING, e.getMessage());
         } finally {
-            if (writeBuffers.isEmpty()) {
+            if (writeBuffersAndExecutors.isEmpty()) {
                 Objects.requireNonNull(selectionKeyWrite, ERR_MSG).cancel();
                 selectionKeyWrite = null;
             }
@@ -108,15 +122,18 @@ public class ChannelHandler {
         return sizeMessage != -1 && sizeMessage <= readBuffer.position();
     }
 
-    private void handle(List<Integer> numbers) {
+    private void handle(List<Integer> numbers, Runnable actionAfterCompletion) {
         var numbers1 = new ArrayList<>(numbers);
+        var start = Instant.now();
         Utils.bubbleSort(numbers1);
+        var end = Instant.now();
+        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);
         byteBuffer.putInt(size).put(message.toByteArray());
         byteBuffer.flip();
-        writeBuffers.add(byteBuffer);
+        writeBuffersAndExecutors.add(new Pair<>(byteBuffer, actionAfterCompletion));
         selectorWriter.addAndWakeup(this);
     }
 
