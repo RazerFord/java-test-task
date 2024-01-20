@@ -1,4 +1,7 @@
-package ru.itmo.mit;
+package ru.itmo.mit.cli;
+
+import ru.itmo.mit.Constants;
+import ru.itmo.mit.Server;
 
 import java.io.PrintStream;
 import java.util.Scanner;

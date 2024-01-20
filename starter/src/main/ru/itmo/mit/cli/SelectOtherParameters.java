@@ -1,5 +1,7 @@
-package ru.itmo.mit;
+package ru.itmo.mit.cli;
 
+import ru.itmo.mit.Constants;
+import ru.itmo.mit.Server;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.ArrayGenerators;
 import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
@@ -79,7 +81,7 @@ public class SelectOtherParameters implements StrategyCLI {
             var guard = guardSupplier.get();
             return new Client(Constants.ADDRESS, Constants.PORT, countRequests, generator, waiting, guard);
         };
-        return new LaunchingStrategy(printStream, scanner, server, countClients, clientSupplier);
+        return new LaunchingStrategy(printStream, server, countClients, clientSupplier);
     }
 
     private static final String SELECTION_ERROR = "The parameter number is incorrect";

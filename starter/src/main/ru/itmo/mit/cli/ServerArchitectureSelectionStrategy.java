@@ -1,5 +1,7 @@
-package ru.itmo.mit;
+package ru.itmo.mit.cli;
 
+import ru.itmo.mit.Constants;
+import ru.itmo.mit.Server;
 import ru.itmo.mit.asyncserver.AsyncServer;
 import ru.itmo.mit.blockingserver.BlockingServer;
 import ru.itmo.mit.nonblockingserver.NonBlockingServer;

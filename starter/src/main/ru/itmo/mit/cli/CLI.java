@@ -1,4 +1,6 @@
-package ru.itmo.mit;
+package ru.itmo.mit.cli;
+
+import ru.itmo.mit.ExitException;
 
 import java.io.InputStream;
 import java.io.PrintStream;

@@ -1,28 +1,26 @@
-package ru.itmo.mit;
+package ru.itmo.mit.cli;
 
+import ru.itmo.mit.ExitException;
+import ru.itmo.mit.Server;
 import ru.mit.itmo.Client;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Scanner;
 import java.util.function.Supplier;
 
 public class LaunchingStrategy implements StrategyCLI {
     private final PrintStream printStream;
-    private final Scanner scanner;
     private final Server server;
     private final int countClients;
     private final Supplier<Client> clientSupplier;
 
     public LaunchingStrategy(
             PrintStream printStream,
-            Scanner scanner,
             Server server,
             int countClients,
             Supplier<Client> clientSupplier
     ) {
         this.printStream = printStream;
-        this.scanner = scanner;
         this.server = server;
         this.countClients = countClients;
         this.clientSupplier = clientSupplier;
@@ -47,11 +45,14 @@ public class LaunchingStrategy implements StrategyCLI {
             Thread.currentThread().interrupt();
         } finally {
             try {
-                server.close();
+                if (server != null) {
+                    server.close();
+                }
             } catch (IOException ignored) {
                 // is the block empty on purpose
             }
         }
+        printStream.println("Finish!");
         throw ExitException.INSTANCE;
     }
 }
