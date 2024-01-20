@@ -29,7 +29,7 @@ public class StatisticsRecorder {
         return value.get();
     }
 
-    public double average(@NotNull Selector selector) {
+    public int average(@NotNull Selector selector) {
         return average(selector.get(fileEntries));
     }
 
@@ -41,11 +41,11 @@ public class StatisticsRecorder {
         strategy.get().addRecord(selector.get(fileEntries), value.get(), time);
     }
 
-    public double average(@NotNull Queue<Long> queue) {
+    public int average(@NotNull Queue<Long> queue) {
         var size = queue.size();
         var skip = (size > 5) ? size / 5 : 0;
         var limit = (size > 5) ? skip * 3 : size;
-        return queue.stream().skip(skip).limit(limit).mapToLong(Long::longValue).average().orElse(0.0);
+        return (int) queue.stream().skip(skip).limit(limit).mapToLong(Long::longValue).average().orElse(0);
     }
 
     public static final Selector SELECTOR_PROCESSING_REQUEST = FileEntries::processingRequest;
