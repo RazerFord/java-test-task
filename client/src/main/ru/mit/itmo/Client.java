@@ -57,6 +57,7 @@ public class Client implements Runnable {
             Thread.currentThread().interrupt();
             return;
         }
+        statisticsRecorder.makeActive();
         var start = Instant.now();
         try (
                 var socket = new Socket(targetAddress, targetPort);
@@ -77,6 +78,7 @@ public class Client implements Runnable {
         }
         var end = Instant.now();
         statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME);
+        statisticsRecorder.makePassive();
     }
 
     private MessageOuterClass.@NotNull Message buildRequest() {
