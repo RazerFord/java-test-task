@@ -7,12 +7,9 @@ import ru.itmo.mit.Server;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.ArrayGenerators;
 import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
-import ru.mit.itmo.arraygenerators.IncreasingArrayGenerators;
 import ru.mit.itmo.guard.DefaultGuard;
 import ru.mit.itmo.guard.Guard;
-import ru.mit.itmo.guard.StrictGuard;
 import ru.mit.itmo.waiting.DefaultWaiting;
-import ru.mit.itmo.waiting.IncreasingWaiting;
 import ru.mit.itmo.waiting.Waiting;
 
 import java.io.PrintStream;

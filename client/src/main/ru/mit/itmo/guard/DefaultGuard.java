@@ -1,15 +1,21 @@
 package ru.mit.itmo.guard;
 
-public class DefaultGuard implements Guard {
-    public static final DefaultGuard INSTANCE = new DefaultGuard();
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
-    @Override
-    public void acquire() {
-       // this code block should remain empty
+public class DefaultGuard implements Guard {
+    private final CyclicBarrier cyclicBarrier;
+
+    public DefaultGuard(int count) {
+        cyclicBarrier = new CyclicBarrier(count);
     }
 
     @Override
-    public void release() {
-        // this code block should remain empty
+    public void await() throws InterruptedException {
+        try {
+            cyclicBarrier.await();
+        } catch (BrokenBarrierException e) {
+            throw new InterruptedException();
+        }
     }
 }
