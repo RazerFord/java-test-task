@@ -5,6 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.asyncserver.AsyncServer;
+import ru.itmo.mit.benchmarks.strategies.BenchArrayLengthStrategy;
+import ru.itmo.mit.benchmarks.strategies.BenchDelayStrategy;
+import ru.itmo.mit.benchmarks.strategies.BenchNumberClientsStrategy;
+import ru.itmo.mit.benchmarks.strategies.BenchmarkStrategy;
 import ru.itmo.mit.blockingserver.BlockingServer;
 import ru.itmo.mit.nonblockingserver.NonBlockingServer;
 import ru.mit.itmo.Client;
@@ -147,7 +151,7 @@ public class BenchmarkImpl implements Benchmark {
         }
 
         private static <T extends RuntimeException> void throwIf(boolean cond, T exception) {
-            if (!cond) {
+            if (cond) {
                 throw exception;
             }
         }

@@ -1,4 +1,4 @@
-package ru.itmo.mit.benchmarks;
+package ru.itmo.mit.benchmarks.strategies;
 
 import ru.itmo.mit.Server;
 import ru.mit.itmo.Client;

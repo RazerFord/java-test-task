@@ -1,4 +1,4 @@
-package ru.itmo.mit.cli;
+package ru.itmo.mit.cli.strategies;
 
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.benchmarks.BenchmarkImpl;

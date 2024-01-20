@@ -1,31 +1,32 @@
-package ru.itmo.mit.benchmarks;
+package ru.itmo.mit.benchmarks.strategies;
 
 import ru.itmo.mit.Server;
 import ru.mit.itmo.Client;
-import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
+import ru.mit.itmo.waiting.DefaultWaiting;
 
 import java.io.IOException;
+import java.time.Duration;
 
-public class BenchArrayLengthStrategy implements BenchmarkStrategy {
+public class BenchDelayStrategy implements BenchmarkStrategy {
     private final Server server;
-    private final int fromArrayLength;
-    private final int toArrayLength;
-    private final int stepArrayLength;
+    private final int fromDelay;
+    private final int toDelay;
+    private final int stepDelay;
     private final int countClients;
     private final Client.Builder clientBuilder;
 
-    public BenchArrayLengthStrategy(
+    public BenchDelayStrategy(
             Server server,
-            int fromArrayLength,
-            int toArrayLength,
-            int stepArrayLength,
+            int fromDelay,
+            int toDelay,
+            int stepDelay,
             int countClients,
             Client.Builder clientBuilder
     ) {
         this.server = server;
-        this.fromArrayLength = fromArrayLength;
-        this.toArrayLength = toArrayLength;
-        this.stepArrayLength = stepArrayLength;
+        this.fromDelay = fromDelay;
+        this.toDelay = toDelay;
+        this.stepDelay = stepDelay;
         this.countClients = countClients;
         this.clientBuilder = clientBuilder;
     }
@@ -37,12 +38,12 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
             threadServer.start();
 
             Thread[] threadsClient = new Thread[countClients];
-            for (int j = fromArrayLength; j <= toArrayLength; j = Integer.min(j + stepArrayLength, toArrayLength)) {
-                int arrayLength = j;
-                clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(arrayLength));
+            for (int j = fromDelay; j <= toDelay; j = Integer.min(j + stepDelay, toDelay)) {
+                int delay = j;
+                clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(delay)));
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
-                if (j == toArrayLength) break;
+                if (j == toDelay) break;
             }
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();

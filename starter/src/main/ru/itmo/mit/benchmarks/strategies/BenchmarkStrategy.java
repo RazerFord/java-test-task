@@ -1,4 +1,4 @@
-package ru.itmo.mit.benchmarks;
+package ru.itmo.mit.benchmarks.strategies;
 
 import org.jetbrains.annotations.NotNull;
 import ru.mit.itmo.Client;

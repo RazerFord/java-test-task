@@ -3,6 +3,8 @@ package ru.itmo.mit.cli;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.ExitException;
+import ru.itmo.mit.cli.strategies.ServerArchitectureSelectionStrategy;
+import ru.itmo.mit.cli.strategies.StrategyCLI;
 
 import java.io.InputStream;
 import java.io.PrintStream;

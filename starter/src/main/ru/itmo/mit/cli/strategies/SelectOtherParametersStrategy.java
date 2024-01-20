@@ -1,4 +1,4 @@
-package ru.itmo.mit.cli;
+package ru.itmo.mit.cli.strategies;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -8,12 +8,12 @@ import ru.itmo.mit.benchmarks.BenchmarkImpl;
 import java.io.PrintStream;
 import java.util.Scanner;
 
-public class SelectOtherParameters implements StrategyCLI {
+public class SelectOtherParametersStrategy implements StrategyCLI {
     private final PrintStream printStream;
     private final Scanner scanner;
     private final BenchmarkImpl.Builder benchmarkBuilder;
 
-    public SelectOtherParameters(
+    public SelectOtherParametersStrategy(
             PrintStream printStream,
             Scanner scanner,
             BenchmarkImpl.Builder benchmarkBuilder

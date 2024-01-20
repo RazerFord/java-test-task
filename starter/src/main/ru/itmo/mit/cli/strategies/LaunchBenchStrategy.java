@@ -1,4 +1,4 @@
-package ru.itmo.mit.cli;
+package ru.itmo.mit.cli.strategies;
 
 import ru.itmo.mit.ExitException;
 import ru.itmo.mit.benchmarks.Benchmark;

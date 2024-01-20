@@ -1,4 +1,4 @@
-package ru.itmo.mit.cli;
+package ru.itmo.mit.cli.strategies;
 
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.benchmarks.BenchmarkImpl;
@@ -26,6 +26,6 @@ public class SelectingNumberRequestsStrategy implements StrategyCLI {
         printStream.print(Constants.SELECT_NUMBER_REQUESTS);
         int countRequests = scanner.nextInt();
         benchmarkBuilder.setCountRequests(countRequests);
-        return new SelectOtherParameters(printStream, scanner, benchmarkBuilder);
+        return new SelectOtherParametersStrategy(printStream, scanner, benchmarkBuilder);
     }
 }
