@@ -79,7 +79,7 @@ public class SelectOtherParameters implements StrategyCLI {
                         .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
                         .setGuardSupplier(() -> guard);
 
-                yield new LaunchBenchDelayStrategy(printStream, server, from, to, step, countRequests, builderClient);
+                yield new LaunchBenchDelayStrategy(printStream, server, from, to, step, other2, builderClient);
             }
 
             default -> throw new IllegalArgumentException(SELECTION_ERROR);
