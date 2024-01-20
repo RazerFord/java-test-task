@@ -4,18 +4,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.Server;
-import ru.mit.itmo.Client;
-import ru.mit.itmo.arraygenerators.ArrayGenerators;
-import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
-import ru.mit.itmo.guard.DefaultGuard;
-import ru.mit.itmo.guard.Guard;
-import ru.mit.itmo.waiting.DefaultWaiting;
-import ru.mit.itmo.waiting.Waiting;
 
 import java.io.PrintStream;
-import java.time.Duration;
 import java.util.Scanner;
-import java.util.function.Supplier;
 
 public class SelectOtherParameters implements StrategyCLI {
     private final PrintStream printStream;
@@ -53,39 +44,24 @@ public class SelectOtherParameters implements StrategyCLI {
         int other2 = scanner.nextInt();
         if (other2 < 0) throw Constants.PARAMETER_NOT_NEGATIVE;
 
-        int countClients;
-        Supplier<ArrayGenerators> generatorsSupplier;
-        Supplier<Waiting> waitingSupplier;
-        Supplier<Guard> guardSupplier;
-        switch (numberParam) {
-            case 1 -> {
-                countClients = other1;
-                generatorsSupplier = () -> new IncreasingArrayGenerators(from, to, step);
-                guardSupplier = () -> DefaultGuard.INSTANCE;
-                waitingSupplier = () -> new DefaultWaiting(Duration.ofMillis(other2));
-            }
-            case 2 -> {
-                countClients = to;
-                generatorsSupplier = () -> new DefaultArrayGenerators(other1);
-                var strictGuard = new StrictGuard(from, to, step);
-                guardSupplier = () -> strictGuard;
-                waitingSupplier = () -> new DefaultWaiting(Duration.ofMillis(other2));
-            }
-            case 3 -> {
-                countClients = other2;
-                generatorsSupplier = () -> new DefaultArrayGenerators(other1);
-                guardSupplier = () -> DefaultGuard.INSTANCE;
-                waitingSupplier = () -> new IncreasingWaiting(Duration.ofMillis(from), Duration.ofMillis(to), Duration.ofMillis(step));
-            }
+        return switch (numberParam) {
+            case 1 -> LaunchBenchChangingArrayLengthStrategy.builder()
+                    .setPrintStream(printStream)
+                    .setServer(server)
+                    .setCountRequests(countRequests)
+                    .setFromArrayLength(from)
+                    .setToArrayLength(to)
+                    .setStepArrayLength(step)
+                    .setCountClients(other1)
+                    .setDelay(other2)
+                    .build();
+
+            case 2 -> null;
+
+            case 3 -> null;
+
             default -> throw new IllegalArgumentException(SELECTION_ERROR);
-        }
-        Supplier<Client> clientSupplier = () -> {
-            var generator = generatorsSupplier.get();
-            var waiting = waitingSupplier.get();
-            var guard = guardSupplier.get();
-            return new Client(Constants.ADDRESS, Constants.PORT, countRequests, generator, waiting, guard);
         };
-        return new LaunchingStrategy(printStream, server, countClients, clientSupplier);
     }
 
     @Contract(pure = true)

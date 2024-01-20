@@ -1,5 +1,6 @@
 package ru.mit.itmo;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
 import ru.mit.itmo.arraygenerators.ArrayGenerators;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,7 +26,7 @@ public class Client implements Runnable {
     private final Waiting waiting;
     private final Guard guard;
 
-    public Client(
+    private Client(
             String targetAddress,
             int targetPort,
             int countRequest,
@@ -78,6 +80,64 @@ public class Client implements Runnable {
             if (numbers.get(i - 1) > numbers.get(i)) {
                 throw LIST_NOT_SORTED;
             }
+        }
+    }
+
+    @Contract(value = " -> new", pure = true)
+    public static @NotNull Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private String targetAddress;
+        private int targetPort;
+        private int countRequest;
+        private ArrayGenerators arrayGenerators;
+        private Waiting waiting;
+        private Guard guard;
+
+        private Builder() {
+        }
+
+        public Builder setTargetAddress(String targetAddress) {
+            this.targetAddress = targetAddress;
+            return this;
+        }
+
+        public Builder setTargetPort(int targetPort) {
+            this.targetPort = targetPort;
+            return this;
+        }
+
+        public Builder setCountRequest(int countRequest) {
+            this.countRequest = countRequest;
+            return this;
+        }
+
+        public Builder setArrayGenerators(ArrayGenerators arrayGenerators) {
+            this.arrayGenerators = arrayGenerators;
+            return this;
+        }
+
+        public Builder setWaiting(Waiting waiting) {
+            this.waiting = waiting;
+            return this;
+        }
+
+        public Builder setGuard(Guard guard) {
+            this.guard = guard;
+            return this;
+        }
+
+        public Client build() {
+            return new Client(
+                    Objects.requireNonNull(targetAddress),
+                    targetPort,
+                    countRequest,
+                    Objects.requireNonNull(arrayGenerators),
+                    Objects.requireNonNull(waiting),
+                    Objects.requireNonNull(guard)
+            );
         }
     }
 

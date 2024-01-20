@@ -27,7 +27,7 @@ public class Constants {
             """;
 
     public static final String SELECT_STEP_FROM_TO = """
-            Select step, from and to
+            Select from, to and step
             """;
 
     public static final String SELECT_OTHER_VALUES = """
