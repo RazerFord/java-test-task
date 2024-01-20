@@ -4,8 +4,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.Server;
+import ru.mit.itmo.Client;
+import ru.mit.itmo.guard.DefaultGuard;
+import ru.mit.itmo.waiting.DefaultWaiting;
 
 import java.io.PrintStream;
+import java.time.Duration;
 import java.util.Scanner;
 
 public class SelectOtherParameters implements StrategyCLI {
@@ -32,30 +36,32 @@ public class SelectOtherParameters implements StrategyCLI {
         int numberParam = scanner.nextInt();
 
         printStream.print(Constants.SELECT_STEP_FROM_TO);
-        int step = scanner.nextInt();
         int from = scanner.nextInt();
         int to = scanner.nextInt();
-        if (from < 0 || to < 0 || from > to || step <= 0) {
-            throw new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step");
-        }
+        int step = scanner.nextInt();
+        if (from < 0 || to < 0 || from > to || step <= 0) throw new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step");
+
         printStream.printf(Constants.SELECT_OTHER_VALUES, removeElement(Constants.PARAMS, numberParam - 1));
         int other1 = scanner.nextInt();
         if (other1 < 0) throw Constants.PARAMETER_NOT_NEGATIVE;
         int other2 = scanner.nextInt();
         if (other2 < 0) throw Constants.PARAMETER_NOT_NEGATIVE;
 
-        return switch (numberParam) {
-            case 1 -> LaunchBenchChangingArrayLengthStrategy.builder()
-                    .setPrintStream(printStream)
-                    .setServer(server)
-                    .setCountRequests(countRequests)
-                    .setFromArrayLength(from)
-                    .setToArrayLength(to)
-                    .setStepArrayLength(step)
-                    .setCountClients(other1)
-                    .setDelay(other2)
-                    .build();
+        var builderClient = Client.builder()
+                .setTargetAddress(Constants.ADDRESS)
+                .setTargetPort(Constants.PORT);
 
+        return switch (numberParam) {
+            case 1 -> {
+                var guard = new DefaultGuard(other1);
+
+                builderClient
+                        .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)))
+                        .setGuardSupplier(() -> guard)
+                        .setCountRequest(countRequests);
+
+                yield new LaunchBenchChangingArrayLengthStrategy(printStream, server, from, to, step, other1, builderClient);
+            }
             case 2 -> null;
 
             case 3 -> null;

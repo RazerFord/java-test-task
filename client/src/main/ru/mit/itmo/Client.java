@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -92,9 +93,9 @@ public class Client implements Runnable {
         private String targetAddress;
         private int targetPort;
         private int countRequest;
-        private ArrayGenerators arrayGenerators;
-        private Waiting waiting;
-        private Guard guard;
+        private Supplier<ArrayGenerators> arrayGenerators;
+        private Supplier<Waiting> waiting;
+        private Supplier<Guard> guard;
 
         private Builder() {
         }
@@ -114,17 +115,17 @@ public class Client implements Runnable {
             return this;
         }
 
-        public Builder setArrayGenerators(ArrayGenerators arrayGenerators) {
+        public Builder setArrayGeneratorsSupplier(Supplier<ArrayGenerators> arrayGenerators) {
             this.arrayGenerators = arrayGenerators;
             return this;
         }
 
-        public Builder setWaiting(Waiting waiting) {
+        public Builder setWaitingSupplier(Supplier<Waiting> waiting) {
             this.waiting = waiting;
             return this;
         }
 
-        public Builder setGuard(Guard guard) {
+        public Builder setGuardSupplier(Supplier<Guard> guard) {
             this.guard = guard;
             return this;
         }
@@ -134,9 +135,9 @@ public class Client implements Runnable {
                     Objects.requireNonNull(targetAddress),
                     targetPort,
                     countRequest,
-                    Objects.requireNonNull(arrayGenerators),
-                    Objects.requireNonNull(waiting),
-                    Objects.requireNonNull(guard)
+                    Objects.requireNonNull(arrayGenerators).get(),
+                    Objects.requireNonNull(waiting).get(),
+                    Objects.requireNonNull(guard).get()
             );
         }
     }

@@ -23,7 +23,7 @@ public class Constants {
             Select parameter to change:
             1. N - Number of elements in the array
             2. M - Number of working clients
-            3. Δ - Time interval between requests
+            3. Δ - Time interval between requests, ms
             """;
 
     public static final String SELECT_STEP_FROM_TO = """
@@ -34,7 +34,7 @@ public class Constants {
             Select other values: %s, %s
             N - Number of elements in the array
             M - Number of working clients
-            Δ - Time interval between requests
+            Δ - Time interval between requests, ms
             """;
 
     public static final IllegalArgumentException PARAMETER_NOT_NEGATIVE = new IllegalArgumentException("Parameter must not be negative");
