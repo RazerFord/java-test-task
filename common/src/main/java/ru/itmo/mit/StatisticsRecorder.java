@@ -25,6 +25,10 @@ public class StatisticsRecorder {
         fileEntries.averageRequestProcessingTime().clear();
     }
 
+    public int value() {
+        return value.get();
+    }
+
     public double average(@NotNull Selector selector) {
         return average(selector.get(fileEntries));
     }
