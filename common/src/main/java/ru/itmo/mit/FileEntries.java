@@ -7,9 +7,9 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public record FileEntries(
-        Queue<String> processingRequest,
-        Queue<String> processingClient,
-        Queue<String> averageRequestProcessingTime
+        Queue<Long> processingRequest,
+        Queue<Long> processingClient,
+        Queue<Long> averageRequestProcessingTime
 ) {
     @Contract(" -> new")
     public static @NotNull FileEntries create() {

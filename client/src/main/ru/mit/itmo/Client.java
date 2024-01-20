@@ -50,20 +50,14 @@ public class Client implements Runnable {
 
     @Override
     public void run() {
-        try {
-            guard.await();
-        } catch (InterruptedException e) {
-            LOGGER.log(Level.WARNING, e.getMessage());
-            Thread.currentThread().interrupt();
-            return;
-        }
-        statisticsRecorder.makeActive();
-        var start = Instant.now();
         try (
                 var socket = new Socket(targetAddress, targetPort);
                 var outputStream = socket.getOutputStream();
                 var inputStream = socket.getInputStream()
         ) {
+            guard.await();
+            statisticsRecorder.makeActive();
+            var start = Instant.now();
             for (int i = 0; i < countRequest; i++) {
                 waiting.trySleep();
                 var message = buildRequest();
@@ -72,13 +66,15 @@ public class Client implements Runnable {
                 waiting.update(Duration.ofMillis(System.currentTimeMillis()));
                 checkSortingList(message.getNumberList());
             }
+            var end = Instant.now();
+            statisticsRecorder.addRecord(Duration.between(start, end).toMillis() / countRequest,
+                    StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME);
         } catch (IOException | InterruptedException | ClientException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
             Thread.currentThread().interrupt();
+        } finally {
+            statisticsRecorder.makePassive();
         }
-        var end = Instant.now();
-        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME);
-        statisticsRecorder.makePassive();
     }
 
     private MessageOuterClass.@NotNull Message buildRequest() {
