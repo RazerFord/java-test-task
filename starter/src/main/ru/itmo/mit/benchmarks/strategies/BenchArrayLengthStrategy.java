@@ -39,6 +39,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
         try {
             var threadServer = new Thread(server);
             threadServer.start();
+            clientBuilder.setTargetPort(server.getPort());
 
             Thread[] threadsClient = new Thread[countClients];
             int from = fromToStepLength.from();

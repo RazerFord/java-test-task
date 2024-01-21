@@ -7,12 +7,17 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class BlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(BlockingServer.class.getName());
     private static final int NUMBER_THREADS = 10;
+    private final Lock bindLock = new ReentrantLock();
+    private final Condition bindCond = bindLock.newCondition();
     private final int serverPort;
     private final int numberThreads;
     private final StatisticsRecorder statisticsRecorder;
@@ -40,6 +45,12 @@ public class BlockingServer implements Server {
     }
 
     private void run(ServerSocket socket) throws IOException {
+        bindLock.lock();
+        try {
+            bindCond.signalAll();
+        } finally {
+            bindLock.unlock();
+        }
         try (
                 var socket1 = socket;
                 var threadPool = Executors.newFixedThreadPool(numberThreads)
@@ -59,5 +70,18 @@ public class BlockingServer implements Server {
     public void close() throws IOException {
         closed = true;
         if (socket != null && !socket.isClosed()) socket.close();
+    }
+
+    @Override
+    public int getPort() throws InterruptedException {
+        bindLock.lock();
+        try {
+            while (socket == null || socket.getLocalPort() == -1) {
+                bindCond.await();
+            }
+        } finally {
+            bindLock.unlock();
+        }
+        return socket.getLocalPort();
     }
 }

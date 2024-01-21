@@ -137,7 +137,6 @@ public class BenchmarkImpl implements Benchmark {
         private Client.Builder createClientBuilder() {
             return Client.builder()
                     .setTargetAddress(Constants.ADDRESS)
-                    .setTargetPort(Constants.PORT)
                     .setCountRequest(countRequests)
                     .setStatisticsRecorderSupplier(() -> statisticsRecorder);
         }

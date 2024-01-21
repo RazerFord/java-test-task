@@ -35,6 +35,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
         try {
             var threadServer = new Thread(server);
             threadServer.start();
+            clientBuilder.setTargetPort(server.getPort());
 
             int from = fromToStepClients.from();
             int to = fromToStepClients.to();

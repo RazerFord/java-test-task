@@ -1,6 +1,8 @@
 package ru.itmo.mit.nonblockingserver;
 
+import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Server;
+import ru.itmo.mit.ServerException;
 import ru.itmo.mit.StatisticsRecorder;
 
 import java.io.IOException;
@@ -12,17 +14,23 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class NonBlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(NonBlockingServer.class.getName());
     private static final int NUMBER_THREADS = 10;
+    private final Lock bindLock = new ReentrantLock();
+    private final Condition bindCond = bindLock.newCondition();
     private final SocketAddress inetAddress;
     private final int numberThreads;
     private final StatisticsRecorder statisticsRecorder;
     private ServerSocketChannel socketChannel;
     private boolean closed;
+    private int port = -1;
 
     public NonBlockingServer(int serverPort, StatisticsRecorder statisticsRecorder) {
         this(serverPort, NUMBER_THREADS, statisticsRecorder);
@@ -45,7 +53,8 @@ public class NonBlockingServer implements Server {
         }
     }
 
-    public void run(ServerSocketChannel socketChannel) throws IOException {
+    public void run(@NotNull ServerSocketChannel socketChannel) throws IOException {
+        updatePort(socketChannel.getLocalAddress());
         try (
                 var socketChannel1 = socketChannel;
                 var readSelector = Selector.open();
@@ -73,5 +82,32 @@ public class NonBlockingServer implements Server {
     public void close() throws IOException {
         closed = true;
         if (socketChannel != null) socketChannel.close();
+    }
+
+    @Override
+    public int getPort() throws InterruptedException {
+        bindLock.lock();
+        try {
+            while (port == -1) {
+                bindCond.await();
+            }
+        } finally {
+            bindLock.unlock();
+        }
+        return port;
+    }
+
+    private void updatePort(SocketAddress socketAddress) {
+        if (socketAddress instanceof InetSocketAddress address) {
+            bindLock.lock();
+            try {
+                port = address.getPort();
+                bindCond.signalAll();
+            } finally {
+                bindLock.unlock();
+            }
+        } else {
+            throw new ServerException();
+        }
     }
 }

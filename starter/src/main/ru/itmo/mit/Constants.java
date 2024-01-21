@@ -7,7 +7,7 @@ public class Constants {
     }
 
     public static final String ADDRESS = "0.0.0.0";
-    public static final int PORT = 8081;
+    public static final int PORT = 0;
     public static final List<Object> PARAMS = List.of("N", "M", "D");
     public static final String TEMPLATE_FILENAME = "%s_%s.txt";
     public static final String FILENAME_DESC = "desc_%s.txt";

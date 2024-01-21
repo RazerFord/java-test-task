@@ -141,8 +141,8 @@ public class Client implements Runnable {
     @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
         private String targetAddress;
-        private int targetPort;
-        private int countRequest;
+        private int targetPort = -1;
+        private int countRequest = -1;
         private Supplier<ArrayGenerators> arrayGenerators;
         private Supplier<Waiting> waiting;
         private Supplier<Guard> guard;
