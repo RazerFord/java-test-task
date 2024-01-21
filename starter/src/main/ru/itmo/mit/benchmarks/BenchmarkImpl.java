@@ -54,6 +54,10 @@ public class BenchmarkImpl implements Benchmark {
         private Builder() {
         }
 
+        public int getNumberParam() {
+            return numberParam;
+        }
+
         public Builder setServerNumber(int architectureNumber) {
             throwIf(architectureNumber < 1 || architectureNumber > 3, SELECTION_ERROR);
             serverNumber = architectureNumber;

@@ -6,12 +6,12 @@ import ru.itmo.mit.benchmarks.BenchmarkImpl;
 import java.io.PrintStream;
 import java.util.Scanner;
 
-public class SelectingNumberRequestsStrategy implements StrategyCLI {
+public class SelectingChangeableParameterStrategy implements StrategyCLI {
     private final PrintStream printStream;
     private final Scanner scanner;
     private final BenchmarkImpl.Builder benchmarkBuilder;
 
-    public SelectingNumberRequestsStrategy(
+    public SelectingChangeableParameterStrategy(
             PrintStream printStream,
             Scanner scanner,
             BenchmarkImpl.Builder benchmarkBuilder
@@ -23,9 +23,9 @@ public class SelectingNumberRequestsStrategy implements StrategyCLI {
 
     @Override
     public StrategyCLI apply() {
-        printStream.print(Constants.SELECT_NUMBER_REQUESTS);
-        int countRequests = scanner.nextInt();
-        benchmarkBuilder.setCountRequests(countRequests);
-        return new SelectingChangeableParameterStrategy(printStream, scanner, benchmarkBuilder);
+        printStream.print(Constants.SELECT_CHANGEABLE_PARAM);
+        int numberParam = scanner.nextInt();
+        benchmarkBuilder.setNumberParam(numberParam);
+        return new SelectingParametersFromToStepStrategy(printStream, scanner, benchmarkBuilder);
     }
 }

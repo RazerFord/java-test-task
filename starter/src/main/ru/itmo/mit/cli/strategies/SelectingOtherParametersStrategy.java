@@ -9,12 +9,12 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class SelectOtherParametersStrategy implements StrategyCLI {
+public class SelectingOtherParametersStrategy implements StrategyCLI {
     private final PrintStream printStream;
     private final Scanner scanner;
     private final BenchmarkImpl.Builder benchmarkBuilder;
 
-    public SelectOtherParametersStrategy(
+    public SelectingOtherParametersStrategy(
             PrintStream printStream,
             Scanner scanner,
             BenchmarkImpl.Builder benchmarkBuilder
@@ -26,19 +26,7 @@ public class SelectOtherParametersStrategy implements StrategyCLI {
 
     @Override
     public StrategyCLI apply() {
-        printStream.print(Constants.SELECT_CHANGEABLE_PARAM);
-        int numberParam = scanner.nextInt();
-        benchmarkBuilder.setNumberParam(numberParam);
-
-        printStream.print(Constants.SELECT_STEP_FROM_TO);
-        int from = scanner.nextInt();
-        int to = scanner.nextInt();
-        int step = scanner.nextInt();
-        if (from < 0 || to < 0 || from > to || step <= 0) {
-            throw new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step");
-        }
-        benchmarkBuilder.setFrom(from).setTo(to).setStep(step);
-
+        int numberParam = benchmarkBuilder.getNumberParam();
         var params = new ArrayList<>(Constants.PARAMS);
         params.remove(numberParam - 1);
 
