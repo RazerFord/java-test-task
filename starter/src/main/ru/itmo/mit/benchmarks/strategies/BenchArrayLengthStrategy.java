@@ -3,6 +3,7 @@ package ru.itmo.mit.benchmarks.strategies;
 import ru.itmo.mit.GraphSaver;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
+import ru.itmo.mit.benchmarks.FromToStep;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
 import ru.mit.itmo.guard.DefaultGuard;
@@ -11,9 +12,7 @@ import java.io.IOException;
 
 public class BenchArrayLengthStrategy implements BenchmarkStrategy {
     private final Server server;
-    private final int fromArrayLength;
-    private final int toArrayLength;
-    private final int stepArrayLength;
+    private final FromToStep fromToStepLength;
     private final int countClients;
     private final Client.Builder clientBuilder;
     private final StatisticsRecorder statisticsRecorder;
@@ -21,18 +20,14 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
 
     public BenchArrayLengthStrategy(
             Server server,
-            int fromArrayLength,
-            int toArrayLength,
-            int stepArrayLength,
+            FromToStep fromToStepLength,
             int countClients,
             Client.Builder clientBuilder,
             StatisticsRecorder statisticsRecorder,
             GraphSaver graphSaver
     ) {
         this.server = server;
-        this.fromArrayLength = fromArrayLength;
-        this.toArrayLength = toArrayLength;
-        this.stepArrayLength = stepArrayLength;
+        this.fromToStepLength = fromToStepLength;
         this.countClients = countClients;
         this.clientBuilder = clientBuilder;
         this.statisticsRecorder = statisticsRecorder;
@@ -46,7 +41,10 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
             threadServer.start();
 
             Thread[] threadsClient = new Thread[countClients];
-            for (int j = fromArrayLength; j <= toArrayLength; j = Integer.min(j + stepArrayLength, toArrayLength)) {
+            int from = fromToStepLength.from();
+            int to = fromToStepLength.to();
+            int step = fromToStepLength.step();
+            for (int j = from; j <= to; j = Integer.min(j + step, to)) {
                 statisticsRecorder.updateValue(j);
                 int arrayLength = j;
                 var guard = new DefaultGuard(countClients);
@@ -55,7 +53,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
                 graphSaver.append(statisticsRecorder);
                 statisticsRecorder.clear();
-                if (j == toArrayLength) break;
+                if (j == to) break;
             }
             graphSaver.save();
         } catch (InterruptedException ignored) {

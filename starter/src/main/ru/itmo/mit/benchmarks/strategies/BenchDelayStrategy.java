@@ -3,6 +3,7 @@ package ru.itmo.mit.benchmarks.strategies;
 import ru.itmo.mit.GraphSaver;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
+import ru.itmo.mit.benchmarks.FromToStep;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.guard.DefaultGuard;
 import ru.mit.itmo.waiting.DefaultWaiting;
@@ -12,9 +13,7 @@ import java.time.Duration;
 
 public class BenchDelayStrategy implements BenchmarkStrategy {
     private final Server server;
-    private final int fromDelay;
-    private final int toDelay;
-    private final int stepDelay;
+    private final FromToStep fromToStepDelay;
     private final int countClients;
     private final Client.Builder clientBuilder;
     private final StatisticsRecorder statisticsRecorder;
@@ -22,18 +21,14 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
 
     public BenchDelayStrategy(
             Server server,
-            int fromDelay,
-            int toDelay,
-            int stepDelay,
+            FromToStep fromToStepDelay,
             int countClients,
             Client.Builder clientBuilder,
             StatisticsRecorder statisticsRecorder,
             GraphSaver graphSaver
     ) {
         this.server = server;
-        this.fromDelay = fromDelay;
-        this.toDelay = toDelay;
-        this.stepDelay = stepDelay;
+        this.fromToStepDelay = fromToStepDelay;
         this.countClients = countClients;
         this.clientBuilder = clientBuilder;
         this.statisticsRecorder = statisticsRecorder;
@@ -47,7 +42,10 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
             threadServer.start();
 
             Thread[] threadsClient = new Thread[countClients];
-            for (int j = fromDelay; j <= toDelay; j = Integer.min(j + stepDelay, toDelay)) {
+            int from = fromToStepDelay.from();
+            int to = fromToStepDelay.to();
+            int step = fromToStepDelay.step();
+            for (int j = from; j <= to; j = Integer.min(j + step, to)) {
                 statisticsRecorder.updateValue(j);
                 int delay = j;
                 var guard = new DefaultGuard(countClients);
@@ -57,7 +55,7 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
                 graphSaver.append(statisticsRecorder);
                 statisticsRecorder.clear();
-                if (j == toDelay) break;
+                if (j == to) break;
             }
             graphSaver.save();
         } catch (InterruptedException ignored) {

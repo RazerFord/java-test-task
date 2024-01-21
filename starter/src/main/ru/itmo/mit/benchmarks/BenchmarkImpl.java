@@ -142,18 +142,19 @@ public class BenchmarkImpl implements Benchmark {
         }
 
         private BenchmarkStrategy createBenchStrategy(Server server, Client.Builder clientBuilder) {
+            var fromToStep = new FromToStep(from, to, step);
             return switch (numberParam) {
                 case 1 -> {
                     clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
-                    yield new BenchArrayLengthStrategy(server, from, to, step, other1, clientBuilder, statisticsRecorder, graphSaver);
+                    yield new BenchArrayLengthStrategy(server, fromToStep, other1, clientBuilder, statisticsRecorder, graphSaver);
                 }
                 case 2 -> {
                     clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1)).setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
-                    yield new BenchNumberClientsStrategy(server, from, to, step, clientBuilder, statisticsRecorder, graphSaver);
+                    yield new BenchNumberClientsStrategy(server, fromToStep, clientBuilder, statisticsRecorder, graphSaver);
                 }
                 case 3 -> {
                     clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1));
-                    yield new BenchDelayStrategy(server, from, to, step, other2, clientBuilder, statisticsRecorder, graphSaver);
+                    yield new BenchDelayStrategy(server, fromToStep, other2, clientBuilder, statisticsRecorder, graphSaver);
                 }
                 default -> throw new IllegalArgumentException(SELECTION_ERROR);
             };
