@@ -8,11 +8,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ru.itmo.mit.Constants.*;
+
 public class GraphSaver {
     private final List<Integer> values = new ArrayList<>();
     private final List<Integer> processingRequest = new ArrayList<>();
     private final List<Integer> processingClient = new ArrayList<>();
     private final List<Integer> averageRequestProcessingTime = new ArrayList<>();
+    private String description = "";
 
     public void append(@NotNull StatisticsRecorder statisticsRecorder) {
         values.add(statisticsRecorder.value());
@@ -21,19 +24,25 @@ public class GraphSaver {
         averageRequestProcessingTime.add(statisticsRecorder.average(StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME));
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public void save() throws IOException {
         var currTime = Instant.now();
         var nanos = currTime.getNano();
         try (
-                var fileWriter1 = new FileWriter("procRequest%s.txt".formatted(nanos));
-                var fileWriter2 = new FileWriter("procClient%s.txt".formatted(nanos));
-                var fileWriter3 = new FileWriter("avgClient%s.txt".formatted(nanos))
+                var desc = new FileWriter(FILENAME_DESC.formatted(nanos));
+                var procReq = new FileWriter(TEMPLATE_FILENAME.formatted(PREFIX_PROC_REQ, nanos));
+                var procClient = new FileWriter(TEMPLATE_FILENAME.formatted(PREFIX_PROC_CLIENT, nanos));
+                var avgReqClient = new FileWriter(TEMPLATE_FILENAME.formatted(PREFIX_AVG_REQ_CLIENT, nanos))
         ) {
+            desc.write(description);
             for (int i = 0; i < values.size(); i++) {
                 var value = values.get(i);
-                fileWriter1.write(PATTERN.formatted(value, processingRequest.get(i)));
-                fileWriter2.write(PATTERN.formatted(value, processingClient.get(i)));
-                fileWriter3.write(PATTERN.formatted(value, averageRequestProcessingTime.get(i)));
+                procReq.write(PATTERN.formatted(value, processingRequest.get(i)));
+                procClient.write(PATTERN.formatted(value, processingClient.get(i)));
+                avgReqClient.write(PATTERN.formatted(value, averageRequestProcessingTime.get(i)));
             }
         }
     }

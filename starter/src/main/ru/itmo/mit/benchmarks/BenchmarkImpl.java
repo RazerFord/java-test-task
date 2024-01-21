@@ -119,6 +119,7 @@ public class BenchmarkImpl implements Benchmark {
 
         public BenchmarkImpl build() {
             throwIf(from > to, new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step"));
+            graphSaver.setDescription(createDescription());
             var server = createServer();
             var clientBuilder = createClientBuilder();
             return new BenchmarkImpl(createBenchStrategy(server, clientBuilder));
@@ -156,6 +157,16 @@ public class BenchmarkImpl implements Benchmark {
                     clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1));
                     yield new BenchDelayStrategy(server, fromToStep, other2, clientBuilder, statisticsRecorder, graphSaver);
                 }
+                default -> throw new IllegalArgumentException(SELECTION_ERROR);
+            };
+        }
+
+        private String createDescription() {
+            String fromToStep = "%s .. %s step %s".formatted(from, to, step);
+            return switch (numberParam) {
+                case 1 -> Constants.DESCRIPTION.formatted(serverNumber, countRequests, fromToStep, other1, other2);
+                case 2 -> Constants.DESCRIPTION.formatted(serverNumber, countRequests, other1, fromToStep, other2);
+                case 3 -> Constants.DESCRIPTION.formatted(serverNumber, countRequests, other1, other2, fromToStep);
                 default -> throw new IllegalArgumentException(SELECTION_ERROR);
             };
         }
