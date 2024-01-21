@@ -67,11 +67,13 @@ public class Client implements Runnable {
     }
 
     private void tryToDo() throws InterruptedException, IOException {
+        guard.acquire();
         try (
                 var socket = new Socket(targetAddress, targetPort);
                 var outputStream = socket.getOutputStream();
                 var inputStream = socket.getInputStream()
         ) {
+            guard.release();
             guard.await();
             statisticsRecorder.makeActive();
             var start = Instant.now();
@@ -90,6 +92,7 @@ public class Client implements Runnable {
             long i = connectionAttempt.getAndIncrement();
             if (i == RECONNECTION_LIMIT) throw new InterruptedException();
             Thread.sleep(i * DURATION_SLEEP_BEFORE_CONNECTION);
+            guard.release();
             tryToDo();
         }
     }
