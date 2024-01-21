@@ -56,10 +56,13 @@ public class AsyncServer implements Server {
             serverChannel.accept(new AsyncHandler(threadPool, serverChannel, this, statisticsRecorder), AcceptCallback.INSTANCE);
 
             acceptLock.lock();
-            while (!closed && !Thread.currentThread().isInterrupted()) {
-                acceptCond.await();
+            try {
+                while (!closed && !Thread.currentThread().isInterrupted()) {
+                    acceptCond.await();
+                }
+            } finally {
+                acceptLock.unlock();
             }
-            acceptLock.unlock();
         } catch (InterruptedException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
             Thread.currentThread().interrupt();
