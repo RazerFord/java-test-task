@@ -109,7 +109,7 @@ public class BenchmarkImpl implements Benchmark {
         }
 
         public Builder setGraphSaver(GraphSaver graphSaver) {
-            Objects.requireNonNull(statisticsRecorder);
+            Objects.requireNonNull(graphSaver);
             this.graphSaver = graphSaver;
             return this;
         }

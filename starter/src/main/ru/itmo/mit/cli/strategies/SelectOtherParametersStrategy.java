@@ -1,13 +1,12 @@
 package ru.itmo.mit.cli.strategies;
 
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Constants;
 import ru.itmo.mit.GraphSaver;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.benchmarks.BenchmarkImpl;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class SelectOtherParametersStrategy implements StrategyCLI {
@@ -40,7 +39,10 @@ public class SelectOtherParametersStrategy implements StrategyCLI {
         }
         benchmarkBuilder.setFrom(from).setTo(to).setStep(step);
 
-        printStream.printf(Constants.SELECT_OTHER_VALUES, removeElement(Constants.PARAMS, numberParam - 1));
+        var params = new ArrayList<>(Constants.PARAMS);
+        params.remove(numberParam - 1);
+
+        printStream.printf(Constants.SELECT_OTHER_VALUES, params.toArray());
         int other1 = scanner.nextInt();
         int other2 = scanner.nextInt();
         benchmarkBuilder
@@ -49,15 +51,5 @@ public class SelectOtherParametersStrategy implements StrategyCLI {
                 .setGraphSaver(new GraphSaver());
 
         return new LaunchBenchStrategy(printStream, benchmarkBuilder.build());
-    }
-
-    @Contract(pure = true)
-    private Object @NotNull [] removeElement(Object @NotNull [] array, int index) {
-        Object[] newArray = new Object[array.length - 1];
-        for (int i = 0, j = 0; i < array.length; i++) {
-            if (i == index) continue;
-            newArray[j++] = array[i];
-        }
-        return newArray;
     }
 }

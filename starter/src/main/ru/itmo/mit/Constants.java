@@ -1,12 +1,14 @@
 package ru.itmo.mit;
 
+import java.util.List;
+
 public class Constants {
     private Constants() {
     }
 
     public static final String ADDRESS = "0.0.0.0";
     public static final int PORT = 8081;
-    public static final Object[] PARAMS = {"N", "M", "D"};
+    public static final List<Object> PARAMS = List.of("N", "M", "D");
 
     public static final String SELECT_ARCHITECTURE = """
             Select architecture:
