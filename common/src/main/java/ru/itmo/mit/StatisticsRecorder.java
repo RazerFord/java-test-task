@@ -11,12 +11,28 @@ public class StatisticsRecorder {
     private final AtomicInteger value = new AtomicInteger();
     private final AtomicReference<StatisticsRecorderStrategy> strategy = new AtomicReference<>(PASSIVE_STRATEGY);
 
+    public boolean isActive() {
+        return strategy.get() == ACTIVE_STRATEGY;
+    }
+
+    public boolean isPassive() {
+        return strategy.get() == PASSIVE_STRATEGY;
+    }
+
+    public boolean isBroken() {
+        return strategy.get() == BROKEN_STRATEGY;
+    }
+
     public void makeActive() {
         strategy.set(ACTIVE_STRATEGY);
     }
 
     public void makePassive() {
         strategy.set(PASSIVE_STRATEGY);
+    }
+
+    public void makeBroken() {
+        strategy.set(BROKEN_STRATEGY);
     }
 
     public void clear() {
@@ -65,6 +81,8 @@ public class StatisticsRecorder {
     private static final ActiveStrategy ACTIVE_STRATEGY = new ActiveStrategy();
 
     private static final PassiveStrategy PASSIVE_STRATEGY = new PassiveStrategy();
+
+    private static final PassiveStrategy BROKEN_STRATEGY = new PassiveStrategy();
 
     private static class ActiveStrategy implements StatisticsRecorderStrategy {
         @Override

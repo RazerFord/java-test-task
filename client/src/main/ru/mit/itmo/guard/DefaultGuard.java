@@ -18,4 +18,9 @@ public class DefaultGuard implements Guard {
             throw new InterruptedException();
         }
     }
+
+    @Override
+    public void reset() {
+        cyclicBarrier.reset();
+    }
 }
