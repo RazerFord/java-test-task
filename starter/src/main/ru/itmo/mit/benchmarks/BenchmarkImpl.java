@@ -3,6 +3,7 @@ package ru.itmo.mit.benchmarks;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.Constants;
+import ru.itmo.mit.GraphSaver;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.asyncserver.AsyncServer;
@@ -47,6 +48,7 @@ public class BenchmarkImpl implements Benchmark {
         private int step;
         private int other1;
         private int other2;
+        private GraphSaver graphSaver;
 
         private Builder() {
         }
@@ -105,6 +107,12 @@ public class BenchmarkImpl implements Benchmark {
             return this;
         }
 
+        public Builder setGraphSaver(GraphSaver graphSaver) {
+            Objects.requireNonNull(statisticsRecorder);
+            this.graphSaver = graphSaver;
+            return this;
+        }
+
         public BenchmarkImpl build() {
             throwIf(from > to, new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step"));
             var server = createServer(serverNumber, statisticsRecorder);
@@ -122,7 +130,7 @@ public class BenchmarkImpl implements Benchmark {
                     builderClient
                             .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)))
                             .setGuardSupplier(() -> guard);
-                    var benchmarkStrategy = new BenchArrayLengthStrategy(server, from, to, step, other1, builderClient, statisticsRecorder);
+                    var benchmarkStrategy = new BenchArrayLengthStrategy(server, from, to, step, other1, builderClient, statisticsRecorder, graphSaver);
 
                     yield new BenchmarkImpl(benchmarkStrategy);
                 }
@@ -131,7 +139,7 @@ public class BenchmarkImpl implements Benchmark {
                             .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
                             .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
 
-                    var benchmarkStrategy = new BenchNumberClientsStrategy(server, from, to, step, builderClient, statisticsRecorder);
+                    var benchmarkStrategy = new BenchNumberClientsStrategy(server, from, to, step, builderClient, statisticsRecorder, graphSaver);
                     yield new BenchmarkImpl(benchmarkStrategy);
                 }
 
@@ -142,7 +150,7 @@ public class BenchmarkImpl implements Benchmark {
                             .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
                             .setGuardSupplier(() -> guard);
 
-                    var benchmarkStrategy = new BenchDelayStrategy(server, from, to, step, other2, builderClient, statisticsRecorder);
+                    var benchmarkStrategy = new BenchDelayStrategy(server, from, to, step, other2, builderClient, statisticsRecorder, graphSaver);
 
                     yield new BenchmarkImpl(benchmarkStrategy);
                 }

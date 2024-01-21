@@ -1,5 +1,6 @@
 package ru.itmo.mit.benchmarks.strategies;
 
+import ru.itmo.mit.GraphSaver;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.Client;
@@ -14,6 +15,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
     private final int stepNumberClients;
     private final Client.Builder clientBuilder;
     private final StatisticsRecorder statisticsRecorder;
+    private final GraphSaver graphSaver;
 
     public BenchNumberClientsStrategy(
             Server server,
@@ -21,7 +23,8 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
             int toNumberClients,
             int stepNumberClients,
             Client.Builder clientBuilder,
-            StatisticsRecorder statisticsRecorder
+            StatisticsRecorder statisticsRecorder,
+            GraphSaver graphSaver
     ) {
         this.server = server;
         this.fromNumberClients = fromNumberClients;
@@ -29,6 +32,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
         this.stepNumberClients = stepNumberClients;
         this.clientBuilder = clientBuilder;
         this.statisticsRecorder = statisticsRecorder;
+        this.graphSaver = graphSaver;
     }
 
     @Override
@@ -44,10 +48,15 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
                 clientBuilder.setGuardSupplier(() -> guard);
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
+                graphSaver.append(statisticsRecorder);
+                statisticsRecorder.clear();
                 if (j == toNumberClients) break;
             }
+            graphSaver.save();
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
+        } catch (IOException ignored) {
+            // this code block is empty
         } finally {
             try {
                 if (server != null) {

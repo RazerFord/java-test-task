@@ -1,5 +1,6 @@
 package ru.itmo.mit.benchmarks.strategies;
 
+import ru.itmo.mit.GraphSaver;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.Client;
@@ -16,6 +17,7 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
     private final int countClients;
     private final Client.Builder clientBuilder;
     private final StatisticsRecorder statisticsRecorder;
+    private final GraphSaver graphSaver;
 
     public BenchDelayStrategy(
             Server server,
@@ -24,7 +26,8 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
             int stepDelay,
             int countClients,
             Client.Builder clientBuilder,
-            StatisticsRecorder statisticsRecorder
+            StatisticsRecorder statisticsRecorder,
+            GraphSaver graphSaver
     ) {
         this.server = server;
         this.fromDelay = fromDelay;
@@ -33,6 +36,7 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
         this.countClients = countClients;
         this.clientBuilder = clientBuilder;
         this.statisticsRecorder = statisticsRecorder;
+        this.graphSaver = graphSaver;
     }
 
     @Override
@@ -48,10 +52,15 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
                 clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(delay)));
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
+                graphSaver.append(statisticsRecorder);
+                statisticsRecorder.clear();
                 if (j == toDelay) break;
             }
+            graphSaver.save();
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
+        } catch (IOException ignored) {
+            // this code block is empty
         } finally {
             try {
                 if (server != null) {
