@@ -38,6 +38,7 @@ public class BenchmarkImpl implements Benchmark {
         return new Builder();
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
         private StatisticsRecorder statisticsRecorder;
         private int serverNumber;
