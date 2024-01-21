@@ -4,6 +4,7 @@ import ru.itmo.mit.GraphSaver;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.Client;
+import ru.mit.itmo.guard.DefaultGuard;
 import ru.mit.itmo.waiting.DefaultWaiting;
 
 import java.io.IOException;
@@ -49,7 +50,9 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
             for (int j = fromDelay; j <= toDelay; j = Integer.min(j + stepDelay, toDelay)) {
                 statisticsRecorder.updateValue(j);
                 int delay = j;
-                clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(delay)));
+                var guard = new DefaultGuard(countClients);
+                clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(delay)))
+                        .setGuardSupplier(() -> guard);
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
                 graphSaver.append(statisticsRecorder);

@@ -15,7 +15,6 @@ import ru.itmo.mit.blockingserver.BlockingServer;
 import ru.itmo.mit.nonblockingserver.NonBlockingServer;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
-import ru.mit.itmo.guard.DefaultGuard;
 import ru.mit.itmo.waiting.DefaultWaiting;
 
 import java.time.Duration;
@@ -120,56 +119,43 @@ public class BenchmarkImpl implements Benchmark {
 
         public BenchmarkImpl build() {
             throwIf(from > to, new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step"));
-            var server = createServer(serverNumber, statisticsRecorder);
-
-            var builderClient = Client.builder()
-                    .setTargetAddress(Constants.ADDRESS)
-                    .setTargetPort(Constants.PORT)
-                    .setCountRequest(countRequests)
-                    .setStatisticsRecorderSupplier(() -> statisticsRecorder);
-
-            return switch (numberParam) {
-                case 1 -> {
-                    var guard = new DefaultGuard(other1);
-
-                    builderClient
-                            .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)))
-                            .setGuardSupplier(() -> guard);
-                    var benchmarkStrategy = new BenchArrayLengthStrategy(server, from, to, step, other1, builderClient, statisticsRecorder, graphSaver);
-
-                    yield new BenchmarkImpl(benchmarkStrategy);
-                }
-                case 2 -> {
-                    builderClient
-                            .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
-                            .setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
-
-                    var benchmarkStrategy = new BenchNumberClientsStrategy(server, from, to, step, builderClient, statisticsRecorder, graphSaver);
-                    yield new BenchmarkImpl(benchmarkStrategy);
-                }
-
-                case 3 -> {
-                    var guard = new DefaultGuard(other2);
-
-                    builderClient
-                            .setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1))
-                            .setGuardSupplier(() -> guard);
-
-                    var benchmarkStrategy = new BenchDelayStrategy(server, from, to, step, other2, builderClient, statisticsRecorder, graphSaver);
-
-                    yield new BenchmarkImpl(benchmarkStrategy);
-                }
-
-                default -> throw new IllegalArgumentException(SELECTION_ERROR);
-            };
+            var server = createServer();
+            var clientBuilder = createClientBuilder();
+            return new BenchmarkImpl(createBenchStrategy(server, clientBuilder));
         }
 
-        private static Server createServer(int architectureNumber, StatisticsRecorder statisticsRecorder) {
-            return switch (architectureNumber) {
+        private Server createServer() {
+            return switch (serverNumber) {
                 case 1 -> new BlockingServer(Constants.PORT, statisticsRecorder);
                 case 2 -> new NonBlockingServer(Constants.PORT, statisticsRecorder);
                 case 3 -> new AsyncServer(Constants.PORT, statisticsRecorder);
                 default -> throw SELECTION_ERROR;
+            };
+        }
+
+        private Client.Builder createClientBuilder() {
+            return Client.builder()
+                    .setTargetAddress(Constants.ADDRESS)
+                    .setTargetPort(Constants.PORT)
+                    .setCountRequest(countRequests)
+                    .setStatisticsRecorderSupplier(() -> statisticsRecorder);
+        }
+
+        private BenchmarkStrategy createBenchStrategy(Server server, Client.Builder clientBuilder) {
+            return switch (numberParam) {
+                case 1 -> {
+                    clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
+                    yield new BenchArrayLengthStrategy(server, from, to, step, other1, clientBuilder, statisticsRecorder, graphSaver);
+                }
+                case 2 -> {
+                    clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1)).setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
+                    yield new BenchNumberClientsStrategy(server, from, to, step, clientBuilder, statisticsRecorder, graphSaver);
+                }
+                case 3 -> {
+                    clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1));
+                    yield new BenchDelayStrategy(server, from, to, step, other2, clientBuilder, statisticsRecorder, graphSaver);
+                }
+                default -> throw new IllegalArgumentException(SELECTION_ERROR);
             };
         }
 

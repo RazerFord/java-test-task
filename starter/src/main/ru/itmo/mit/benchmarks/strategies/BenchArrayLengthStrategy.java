@@ -5,6 +5,7 @@ import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
+import ru.mit.itmo.guard.DefaultGuard;
 
 import java.io.IOException;
 
@@ -48,8 +49,9 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
             for (int j = fromArrayLength; j <= toArrayLength; j = Integer.min(j + stepArrayLength, toArrayLength)) {
                 statisticsRecorder.updateValue(j);
                 int arrayLength = j;
-                clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(arrayLength));
-
+                var guard = new DefaultGuard(countClients);
+                clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(arrayLength))
+                        .setGuardSupplier(() -> guard);
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
                 graphSaver.append(statisticsRecorder);
                 statisticsRecorder.clear();
