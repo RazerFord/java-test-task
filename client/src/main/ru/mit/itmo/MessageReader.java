@@ -2,6 +2,7 @@ package ru.mit.itmo;
 
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
+import ru.mit.itmo.exceptions.ClientException;
 
 import java.io.IOException;
 import java.io.InputStream;

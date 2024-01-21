@@ -46,7 +46,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
                 clientBuilder.setGuardSupplier(() -> guard);
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
-                graphSaver.append(statisticsRecorder);
+                if (!statisticsRecorder.isBroken()) graphSaver.append(statisticsRecorder);
                 statisticsRecorder.clear();
                 if (j == to) break;
             }

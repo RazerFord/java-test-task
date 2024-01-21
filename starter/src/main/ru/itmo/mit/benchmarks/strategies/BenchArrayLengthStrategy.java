@@ -51,7 +51,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
                 clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(arrayLength))
                         .setGuardSupplier(() -> guard);
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
-                graphSaver.append(statisticsRecorder);
+                if (!statisticsRecorder.isBroken()) graphSaver.append(statisticsRecorder);
                 statisticsRecorder.clear();
                 if (j == to) break;
             }

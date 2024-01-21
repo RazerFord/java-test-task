@@ -1,4 +1,4 @@
-package ru.mit.itmo;
+package ru.mit.itmo.exceptions;
 
 public class ClientException extends RuntimeException {
         public ClientException() {

@@ -53,7 +53,7 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
                         .setGuardSupplier(() -> guard);
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
-                graphSaver.append(statisticsRecorder);
+                if (!statisticsRecorder.isBroken()) graphSaver.append(statisticsRecorder);
                 statisticsRecorder.clear();
                 if (j == to) break;
             }

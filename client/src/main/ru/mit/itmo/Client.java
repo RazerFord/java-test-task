@@ -5,16 +5,21 @@ import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.MessageOuterClass;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.mit.itmo.arraygenerators.ArrayGenerators;
+import ru.mit.itmo.exceptions.ClientException;
+import ru.mit.itmo.exceptions.ReconnectionException;
 import ru.mit.itmo.guard.Guard;
 import ru.mit.itmo.waiting.Waiting;
 
 import java.io.IOException;
 import java.net.BindException;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -23,7 +28,8 @@ import java.util.logging.Logger;
 public class Client implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(Client.class.getName());
     private static final long DURATION_SLEEP_BEFORE_CONNECTION = 1000; // ms
-    private static final long RECONNECTION_LIMIT = 10;
+    private static final long RECONNECTION_LIMIT = 15;
+    private final AtomicBoolean acquired = new AtomicBoolean(false);
     private final AtomicLong connectionAttempt = new AtomicLong(1);
     private final MessageReader messageReader = new MessageReader();
     private final MessageSender messageSender = new MessageSender();
@@ -57,23 +63,22 @@ public class Client implements Runnable {
     public void run() {
         try {
             tryToDo();
-        } catch (IOException | InterruptedException | ClientException e) {
+        } catch (BrokenBarrierException | IOException | InterruptedException | ClientException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
             Thread.currentThread().interrupt();
-            guard.reset();
-        } finally {
-            statisticsRecorder.makePassive();
+            guard.destroy();
+            statisticsRecorder.makeBroken();
         }
     }
 
-    private void tryToDo() throws InterruptedException, IOException {
-        guard.acquire();
+    private void tryToDo() throws InterruptedException, IOException, BrokenBarrierException {
+        acquire();
         try (
                 var socket = new Socket(targetAddress, targetPort);
                 var outputStream = socket.getOutputStream();
                 var inputStream = socket.getInputStream()
         ) {
-            guard.release();
+            release();
             guard.await();
             statisticsRecorder.makeActive();
             var start = Instant.now();
@@ -88,18 +93,36 @@ public class Client implements Runnable {
             var end = Instant.now();
             statisticsRecorder.addRecord(Duration.between(start, end).toMillis() / countRequest,
                     StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME);
-        } catch (BindException e) {
+        } catch (BindException | ConnectException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
             long i = connectionAttempt.getAndIncrement();
-            if (i == RECONNECTION_LIMIT) throw new InterruptedException();
+            if (i == RECONNECTION_LIMIT) {
+                throw new ReconnectionException();
+            }
             Thread.sleep(i * DURATION_SLEEP_BEFORE_CONNECTION);
-            guard.release();
+            release();
             tryToDo();
+        } finally {
+            release();
+            statisticsRecorder.makePassive();
         }
     }
 
     private MessageOuterClass.@NotNull Message buildRequest() {
         List<Integer> numbers = arrayGenerators.generate();
         return MessageOuterClass.Message.newBuilder().addAllNumber(numbers).build();
+    }
+
+    private void acquire() throws InterruptedException {
+        acquired.set(true);
+        guard.acquire();
+    }
+
+    private void release() {
+        if (acquired.get()) {
+            guard.release();
+            acquired.set(false);
+        }
     }
 
     private void checkSortingList(@NotNull List<Integer> numbers) {
