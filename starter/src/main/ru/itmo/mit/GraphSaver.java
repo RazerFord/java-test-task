@@ -23,10 +23,11 @@ public class GraphSaver {
 
     public void save() throws IOException {
         var currTime = Instant.now();
+        var nanos = currTime.getNano();
         try (
-                var fileWriter1 = new FileWriter("procRequest" + currTime + ".txt");
-                var fileWriter2 = new FileWriter("procClient" + currTime + ".txt");
-                var fileWriter3 = new FileWriter("avgClient" + currTime + ".txt")
+                var fileWriter1 = new FileWriter("procRequest%s.txt".formatted(nanos));
+                var fileWriter2 = new FileWriter("procClient%s.txt".formatted(nanos));
+                var fileWriter3 = new FileWriter("avgClient%s.txt".formatted(nanos))
         ) {
             for (int i = 0; i < values.size(); i++) {
                 var value = values.get(i);
