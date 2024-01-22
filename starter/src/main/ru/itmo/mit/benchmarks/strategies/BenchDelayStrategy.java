@@ -5,8 +5,8 @@ import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.benchmarks.FromToStep;
 import ru.mit.itmo.Client;
-import ru.mit.itmo.guard.DefaultGuard;
-import ru.mit.itmo.waiting.DefaultWaiting;
+import ru.mit.itmo.guard.GuardImpl;
+import ru.mit.itmo.waiting.WaitingImpl;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -49,8 +49,8 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
             for (int j = from; j <= to; j = Integer.min(j + step, to)) {
                 statisticsRecorder.updateValue(j);
                 int delay = j;
-                var guard = new DefaultGuard(countClients);
-                clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(delay)))
+                var guard = new GuardImpl(countClients);
+                clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(delay)))
                         .setGuardSupplier(() -> guard);
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);

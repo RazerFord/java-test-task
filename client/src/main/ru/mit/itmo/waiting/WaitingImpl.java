@@ -2,11 +2,11 @@ package ru.mit.itmo.waiting;
 
 import java.time.Duration;
 
-public class DefaultWaiting implements Waiting {
+public class WaitingImpl implements Waiting {
     private Duration lastTime = Duration.ZERO;
     private final Duration period;
 
-    public DefaultWaiting(Duration period) {
+    public WaitingImpl(Duration period) {
         this.period = period;
     }
 

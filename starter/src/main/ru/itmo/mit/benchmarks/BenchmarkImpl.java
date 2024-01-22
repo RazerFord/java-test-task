@@ -14,8 +14,8 @@ import ru.itmo.mit.benchmarks.strategies.BenchmarkStrategy;
 import ru.itmo.mit.blockingserver.BlockingServer;
 import ru.itmo.mit.nonblockingserver.NonBlockingServer;
 import ru.mit.itmo.Client;
-import ru.mit.itmo.arraygenerators.DefaultArrayGenerators;
-import ru.mit.itmo.waiting.DefaultWaiting;
+import ru.mit.itmo.arraygenerators.ArrayGeneratorsImpl;
+import ru.mit.itmo.waiting.WaitingImpl;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -147,15 +147,15 @@ public class BenchmarkImpl implements Benchmark {
             var fromToStep = new FromToStep(from, to, step);
             return switch (numberParam) {
                 case 1 -> {
-                    clientBuilder.setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
+                    clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(other2)));
                     yield new BenchArrayLengthStrategy(server, fromToStep, other1, clientBuilder, statisticsRecorder, graphicsSaver);
                 }
                 case 2 -> {
-                    clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1)).setWaitingSupplier(() -> new DefaultWaiting(Duration.ofMillis(other2)));
+                    clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(other1)).setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(other2)));
                     yield new BenchNumberClientsStrategy(server, fromToStep, clientBuilder, statisticsRecorder, graphicsSaver);
                 }
                 case 3 -> {
-                    clientBuilder.setArrayGeneratorsSupplier(() -> new DefaultArrayGenerators(other1));
+                    clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(other1));
                     yield new BenchDelayStrategy(server, fromToStep, other2, clientBuilder, statisticsRecorder, graphicsSaver);
                 }
                 default -> throw new IllegalArgumentException(SELECTION_ERROR);

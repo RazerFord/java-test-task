@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class DefaultGuard implements Guard {
+public class GuardImpl implements Guard {
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final AtomicInteger currCount = new AtomicInteger(0);
@@ -16,7 +16,7 @@ public class DefaultGuard implements Guard {
     private final AtomicBoolean broken = new AtomicBoolean(false);
     private final int count;
 
-    public DefaultGuard(int count) {
+    public GuardImpl(int count) {
         this.count = count;
     }
 

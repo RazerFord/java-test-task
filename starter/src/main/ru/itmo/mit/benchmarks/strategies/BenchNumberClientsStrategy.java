@@ -5,7 +5,7 @@ import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.benchmarks.FromToStep;
 import ru.mit.itmo.Client;
-import ru.mit.itmo.guard.DefaultGuard;
+import ru.mit.itmo.guard.GuardImpl;
 
 import java.io.IOException;
 
@@ -43,7 +43,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
             for (int j = from; j <= to; j = Integer.min(j + step, to)) {
                 statisticsRecorder.updateValue(j);
                 Thread[] threadsClient = new Thread[j];
-                var guard = new DefaultGuard(j);
+                var guard = new GuardImpl(j);
                 clientBuilder.setGuardSupplier(() -> guard);
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);

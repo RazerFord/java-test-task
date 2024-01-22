@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class DefaultArrayGenerators implements ArrayGenerators {
+public class ArrayGeneratorsImpl implements ArrayGenerators {
     private final Random random;
     private final int count;
 
-    public DefaultArrayGenerators(int count) {
+    public ArrayGeneratorsImpl(int count) {
         random = new Random();
         this.count = count;
     }
