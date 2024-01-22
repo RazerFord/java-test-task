@@ -19,17 +19,19 @@ public class BlockingServer implements Server {
     private final Lock bindLock = new ReentrantLock();
     private final Condition bindCond = bindLock.newCondition();
     private final int serverPort;
+    private final int backlog;
     private final int numberThreads;
     private final StatisticsRecorder statisticsRecorder;
     private ServerSocket socket;
     private boolean closed;
 
-    public BlockingServer(int serverPort, StatisticsRecorder statisticsRecorder) {
-        this(serverPort, NUMBER_THREADS, statisticsRecorder);
+    public BlockingServer(int serverPort, int backlog, StatisticsRecorder statisticsRecorder) {
+        this(serverPort, backlog, NUMBER_THREADS, statisticsRecorder);
     }
 
-    public BlockingServer(int serverPort, int numberThreads, StatisticsRecorder statisticsRecorder) {
+    public BlockingServer(int serverPort, int backlog, int numberThreads, StatisticsRecorder statisticsRecorder) {
         this.serverPort = serverPort;
+        this.backlog = backlog;
         this.numberThreads = numberThreads;
         this.statisticsRecorder = statisticsRecorder;
     }
@@ -37,7 +39,7 @@ public class BlockingServer implements Server {
     @Override
     public void run() {
         try {
-            socket = new ServerSocket(serverPort);
+            socket = new ServerSocket(serverPort, backlog);
             run(socket);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, e.getMessage());

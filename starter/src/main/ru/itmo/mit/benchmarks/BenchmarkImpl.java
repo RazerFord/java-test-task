@@ -144,10 +144,11 @@ public class BenchmarkImpl implements Benchmark {
         }
 
         private Server createServer(StatisticsRecorder statisticsRecorder) {
+            int backlog = createBacklog();
             return switch (serverNumber) {
-                case 1 -> new BlockingServer(Constants.PORT, statisticsRecorder);
-                case 2 -> new NonBlockingServer(Constants.PORT, statisticsRecorder);
-                case 3 -> new AsyncServer(Constants.PORT, statisticsRecorder);
+                case 1 -> new BlockingServer(Constants.PORT, backlog, statisticsRecorder);
+                case 2 -> new NonBlockingServer(Constants.PORT, backlog, statisticsRecorder);
+                case 3 -> new AsyncServer(Constants.PORT, backlog, statisticsRecorder);
                 default -> throw SELECTION_ERROR;
             };
         }
@@ -208,6 +209,15 @@ public class BenchmarkImpl implements Benchmark {
                 case 1 -> "array length";
                 case 2 -> "number of clients";
                 case 3 -> "time period from receiving to sending a message, ms";
+                default -> throw new IllegalArgumentException(SELECTION_ERROR);
+            };
+        }
+
+        private int createBacklog() {
+            return switch (numberParam) {
+                case 1 -> other1;
+                case 2 -> to;
+                case 3 -> other2;
                 default -> throw new IllegalArgumentException(SELECTION_ERROR);
             };
         }

@@ -26,18 +26,20 @@ public class NonBlockingServer implements Server {
     private final Lock bindLock = new ReentrantLock();
     private final Condition bindCond = bindLock.newCondition();
     private final SocketAddress inetAddress;
+    private final int backlog;
     private final int numberThreads;
     private final StatisticsRecorder statisticsRecorder;
     private ServerSocketChannel socketChannel;
     private boolean closed;
     private int realPort = -1;
 
-    public NonBlockingServer(int serverPort, StatisticsRecorder statisticsRecorder) {
-        this(serverPort, NUMBER_THREADS, statisticsRecorder);
+    public NonBlockingServer(int serverPort, int backlog, StatisticsRecorder statisticsRecorder) {
+        this(serverPort, backlog, NUMBER_THREADS, statisticsRecorder);
     }
 
-    public NonBlockingServer(int serverPort, int numberThreads, StatisticsRecorder statisticsRecorder) {
+    public NonBlockingServer(int serverPort, int backlog, int numberThreads, StatisticsRecorder statisticsRecorder) {
         inetAddress = new InetSocketAddress(serverPort);
+        this.backlog = backlog;
         this.numberThreads = numberThreads;
         this.statisticsRecorder = statisticsRecorder;
     }
@@ -46,7 +48,7 @@ public class NonBlockingServer implements Server {
     public void run() {
         try {
             socketChannel = ServerSocketChannel.open();
-            socketChannel.socket().bind(inetAddress);
+            socketChannel.socket().bind(inetAddress, backlog);
             run(socketChannel);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, e.getMessage());

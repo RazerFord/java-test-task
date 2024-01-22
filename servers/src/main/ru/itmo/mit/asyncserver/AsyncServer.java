@@ -26,17 +26,19 @@ public class AsyncServer implements Server {
     private final Condition acceptCond = acceptLock.newCondition();
     private final Condition bindCond = bindLock.newCondition();
     private final InetSocketAddress inetSocketAddress;
+    private final int backlog;
     private final int numberThreads;
     private final StatisticsRecorder statisticsRecorder;
     private boolean closed;
     private int realPort = -1;
 
-    public AsyncServer(int serverPort, StatisticsRecorder statisticsRecorder) {
-        this(serverPort, NUMBER_THREADS, statisticsRecorder);
+    public AsyncServer(int serverPort, int backlog, StatisticsRecorder statisticsRecorder) {
+        this(serverPort, backlog, NUMBER_THREADS, statisticsRecorder);
     }
 
-    public AsyncServer(int serverPort, int numberThreads, StatisticsRecorder statisticsRecorder) {
+    public AsyncServer(int serverPort, int backlog, int numberThreads, StatisticsRecorder statisticsRecorder) {
         this.inetSocketAddress = new InetSocketAddress(serverPort);
+        this.backlog = backlog;
         this.numberThreads = numberThreads;
         this.statisticsRecorder = statisticsRecorder;
     }
@@ -56,7 +58,7 @@ public class AsyncServer implements Server {
 
     private void run(ExecutorService threadPool, AsynchronousChannelGroup channelGroup) throws IOException {
         try (var serverChannel = AsynchronousServerSocketChannel.open(channelGroup)) {
-            serverChannel.bind(inetSocketAddress);
+            serverChannel.bind(inetSocketAddress, backlog);
             updatePort(serverChannel.getLocalAddress());
 
             serverChannel.accept(new AsyncHandler(threadPool, serverChannel, this, statisticsRecorder), AcceptCallback.INSTANCE);
