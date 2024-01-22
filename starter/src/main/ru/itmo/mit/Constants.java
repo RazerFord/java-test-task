@@ -11,10 +11,10 @@ public class Constants {
     public static final List<Object> PARAMS = List.of("N", "M", "D");
     public static final String TEMPLATE_FILENAME_TXT = "%s_%s.txt";
     public static final String TEMPLATE_FILENAME_IMG = "%s_%s.png";
-    public static final String FILENAME_DESC = "desc_%s.txt";
-    public static final String PREFIX_PROC_REQ = "proc_request";
-    public static final String PREFIX_PROC_CLIENT = "proc_client";
-    public static final String PREFIX_AVG_REQ_CLIENT = "avg_req_client";
+    public static final String FILENAME_DESC = "%s_description.txt";
+    public static final String PROC_REQ = "processing_request_on_server";
+    public static final String PROC_CLIENT = "processing_client_on_server";
+    public static final String AVG_REQ_CLIENT = "average_request_time_on_client";
     public static final String PATH_TO_FILES = "./results";
     public static final int NUMBER_SIMULTANEOUS_CONNECTIONS = 10;
     public static final int NUMBER_WARMING_ITERATIONS = 2;
