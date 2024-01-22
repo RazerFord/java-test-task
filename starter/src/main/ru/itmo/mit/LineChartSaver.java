@@ -42,15 +42,16 @@ public class LineChartSaver {
 
     public void save() throws IOException {
         var fileNamePrefix = String.join("_", architectureName.toLowerCase().split("( )+"));
+        var changeableParameter = String.join("_", axisName.toLowerCase().split("( )+"));
         Files.createDirectories(pathToFiles);
-        saveFiles(fileNamePrefix);
-        saveGraphics(fileNamePrefix);
+        saveFiles(fileNamePrefix, changeableParameter);
+        saveGraphics(fileNamePrefix, changeableParameter);
     }
 
-    private void saveFiles(String fileNamePrefix) throws IOException {
-        var template = TEMPLATE_FILENAME_TXT.formatted(fileNamePrefix, "%s");
+    private void saveFiles(String fileNamePrefix, String changeableParameter) throws IOException {
+        var template = TEMPLATE_FILENAME_TXT.formatted(fileNamePrefix, changeableParameter, "%s");
         try (
-                var desc = new FileWriter(getFile(FILENAME_DESC.formatted(fileNamePrefix)));
+                var desc = new FileWriter(getFile(FILENAME_DESC.formatted(fileNamePrefix, changeableParameter)));
                 var procReq = new FileWriter(getFile(template.formatted(PROC_REQ)));
                 var procClient = new FileWriter(getFile(template.formatted(PROC_CLIENT)));
                 var avgReqClient = new FileWriter(getFile(template.formatted(AVG_REQ_CLIENT)))
@@ -65,8 +66,8 @@ public class LineChartSaver {
         }
     }
 
-    private void saveGraphics(String fileNamePrefix) throws IOException {
-        var template = TEMPLATE_FILENAME_IMG.formatted(fileNamePrefix, "%s");
+    private void saveGraphics(String fileNamePrefix, String changeableParameter) throws IOException {
+        var template = TEMPLATE_FILENAME_IMG.formatted(fileNamePrefix, changeableParameter, "%s");
         var builder = LineChart.builder().setTitle(fileNamePrefix).setX(axisName).setY(ORDINATE);
 
         var procReq = builder.setFile(getFile(template.formatted(PROC_REQ)))

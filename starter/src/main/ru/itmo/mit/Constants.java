@@ -9,9 +9,9 @@ public class Constants {
     public static final String ADDRESS = "0.0.0.0";
     public static final int PORT = 0;
     public static final List<Object> PARAMS = List.of("N", "M", "D");
-    public static final String TEMPLATE_FILENAME_TXT = "%s_%s.txt";
-    public static final String TEMPLATE_FILENAME_IMG = "%s_%s.png";
-    public static final String FILENAME_DESC = "%s_description.txt";
+    public static final String TEMPLATE_FILENAME_TXT = "%s_%s_%s.txt";
+    public static final String TEMPLATE_FILENAME_IMG = "%s_%s_%s.png";
+    public static final String FILENAME_DESC = "%s_%s_description.txt";
     public static final String PROC_REQ = "processing_request_on_server";
     public static final String PROC_CLIENT = "processing_client_on_server";
     public static final String AVG_REQ_CLIENT = "average_request_time_on_client";
