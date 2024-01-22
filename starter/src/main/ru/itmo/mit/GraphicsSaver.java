@@ -17,7 +17,7 @@ import java.util.List;
 
 import static ru.itmo.mit.Constants.*;
 
-public class GraphSaver {
+public class GraphicsSaver {
     private static final String PATTERN = "%s %s%n";
     private static final String ORDINATE = "time";
     private static final String ABSCISSA_PROC_REQ = "request processing time";
@@ -53,7 +53,7 @@ public class GraphSaver {
     public void save() throws IOException {
         var nanos = Instant.now().getNano();
         saveFiles(nanos);
-        saveGraph(nanos);
+        saveGraphics(nanos);
     }
 
     private void saveFiles(int nanos) throws IOException {
@@ -73,7 +73,7 @@ public class GraphSaver {
         }
     }
 
-    private void saveGraph(int nanos) throws IOException {
+    private void saveGraphics(int nanos) throws IOException {
         var procReq = new LineChart(
                 TEMPLATE_FILENAME_IMG.formatted(PREFIX_PROC_REQ, nanos),
                 architectureName,

@@ -1,6 +1,6 @@
 package ru.itmo.mit.benchmarks.strategies;
 
-import ru.itmo.mit.GraphSaver;
+import ru.itmo.mit.GraphicsSaver;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.benchmarks.FromToStep;
@@ -14,20 +14,20 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
     private final FromToStep fromToStepClients;
     private final Client.Builder clientBuilder;
     private final StatisticsRecorder statisticsRecorder;
-    private final GraphSaver graphSaver;
+    private final GraphicsSaver graphicsSaver;
 
     public BenchNumberClientsStrategy(
             Server server,
             FromToStep fromToStepClients,
             Client.Builder clientBuilder,
             StatisticsRecorder statisticsRecorder,
-            GraphSaver graphSaver
+            GraphicsSaver graphicsSaver
     ) {
         this.server = server;
         this.fromToStepClients = fromToStepClients;
         this.clientBuilder = clientBuilder;
         this.statisticsRecorder = statisticsRecorder;
-        this.graphSaver = graphSaver;
+        this.graphicsSaver = graphicsSaver;
     }
 
     @Override
@@ -47,11 +47,11 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
                 clientBuilder.setGuardSupplier(() -> guard);
 
                 BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
-                if (!statisticsRecorder.isBroken()) graphSaver.append(statisticsRecorder);
+                if (!statisticsRecorder.isBroken()) graphicsSaver.append(statisticsRecorder);
                 statisticsRecorder.clear();
                 if (j == to) break;
             }
-            graphSaver.save();
+            graphicsSaver.save();
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
         } catch (IOException ignored) {
