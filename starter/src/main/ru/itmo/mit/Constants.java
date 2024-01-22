@@ -19,6 +19,7 @@ public class Constants {
     public static final int NUMBER_SIMULTANEOUS_CONNECTIONS = 10;
     public static final int NUMBER_WARMING_ITERATIONS = 2;
     public static final boolean LOG = false;
+    public static final String PROGRESS = "Progress: %s/%s\r";
 
     public static final String SELECT_ARCHITECTURE = """
             Select architecture:

@@ -8,8 +8,10 @@ import ru.mit.itmo.arraygenerators.ArrayGeneratorsImpl;
 import ru.mit.itmo.guard.GuardImpl;
 
 import java.io.IOException;
+import java.io.PrintStream;
 
 import static ru.itmo.mit.Constants.NUMBER_SIMULTANEOUS_CONNECTIONS;
+import static ru.itmo.mit.Constants.PROGRESS;
 
 public class BenchArrayLengthStrategy implements BenchmarkStrategy {
     private final FromToStep fromToStepLength;
@@ -36,7 +38,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
     }
 
     @Override
-    public void launch(int port) throws InterruptedException, IOException {
+    public void launch(int port, PrintStream printStream) throws InterruptedException, IOException {
         clientBuilder.setTargetPort(port);
 
         Thread[] threadsClient = new Thread[countClients];
@@ -49,6 +51,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
             int arrayLength = j;
             var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength)).setGuardSupplier(() -> guard);
+            printStream.printf(PROGRESS, j, to);
             BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
             if (!statisticsRecorder.isBroken()) lineChartSaver.append(statisticsRecorder);
             statisticsRecorder.clear();

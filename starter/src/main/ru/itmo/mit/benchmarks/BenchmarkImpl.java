@@ -18,17 +18,21 @@ import ru.mit.itmo.arraygenerators.ArrayGeneratorsImpl;
 import ru.mit.itmo.waiting.WaitingImpl;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.time.Duration;
+import java.util.Objects;
 
 import static ru.itmo.mit.Constants.NUMBER_WARMING_ITERATIONS;
 
 public class BenchmarkImpl implements Benchmark {
     private final Server server;
     private final BenchmarkStrategy benchmarkStrategy;
+    private final PrintStream printStream;
 
-    private BenchmarkImpl(Server server, BenchmarkStrategy benchmarkStrategy) {
+    private BenchmarkImpl(Server server, BenchmarkStrategy benchmarkStrategy, PrintStream printStream) {
         this.server = server;
         this.benchmarkStrategy = benchmarkStrategy;
+        this.printStream = printStream;
     }
 
     @Override
@@ -36,7 +40,7 @@ public class BenchmarkImpl implements Benchmark {
         try {
             var threadServer = new Thread(server);
             threadServer.start();
-            benchmarkStrategy.launch(server.getPort());
+            benchmarkStrategy.launch(server.getPort(), printStream);
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
         } catch (IOException e) {
@@ -59,6 +63,7 @@ public class BenchmarkImpl implements Benchmark {
 
     @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
+        private PrintStream printStream;
         private int serverNumber;
         private int countRequests;
         private int numberParam;
@@ -73,6 +78,12 @@ public class BenchmarkImpl implements Benchmark {
 
         public int getNumberParam() {
             return numberParam;
+        }
+
+        public Builder setPrintStream(PrintStream printStream) {
+            Objects.requireNonNull(printStream);
+            this.printStream = printStream;
+            return this;
         }
 
         public Builder setServerNumber(int architectureNumber) {
@@ -129,7 +140,7 @@ public class BenchmarkImpl implements Benchmark {
             var lineChartSaver = new LineChartSaver(createDescription(), createAxisName(), createArchitectureName());
             var server = createServer(statisticsRecorder);
             var clientBuilder = createClientBuilder(statisticsRecorder);
-            return new BenchmarkImpl(server, createBenchStrategy(clientBuilder, statisticsRecorder, lineChartSaver));
+            return new BenchmarkImpl(server, createBenchStrategy(clientBuilder, statisticsRecorder, lineChartSaver), printStream);
         }
 
         private Server createServer(StatisticsRecorder statisticsRecorder) {

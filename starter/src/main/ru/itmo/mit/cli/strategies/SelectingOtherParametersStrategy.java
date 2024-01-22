@@ -32,6 +32,6 @@ public class SelectingOtherParametersStrategy implements StrategyCLI {
         int other1 = scanner.nextInt();
         int other2 = scanner.nextInt();
 
-        return new LaunchBenchStrategy(printStream, benchmarkBuilder.setOther1(other1).setOther2(other2).build());
+        return new LaunchBenchStrategy(printStream, benchmarkBuilder.setOther1(other1).setOther2(other2).setPrintStream(printStream).build());
     }
 }

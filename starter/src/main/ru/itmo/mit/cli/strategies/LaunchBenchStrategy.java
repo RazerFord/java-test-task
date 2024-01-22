@@ -20,7 +20,7 @@ public class LaunchBenchStrategy implements StrategyCLI {
     @Override
     public StrategyCLI apply() {
         benchmark.bench();
-        printStream.println("Finish!");
+        printStream.println("Finish!" + " ".repeat(22));
         throw ExitException.INSTANCE;
     }
 }
