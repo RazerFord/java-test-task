@@ -12,12 +12,17 @@ public class GuardImpl implements Guard {
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final AtomicInteger currCount = new AtomicInteger(0);
-    private final Semaphore connectSemaphore = new Semaphore(1);
+    private final Semaphore connectSemaphore;
     private final AtomicBoolean broken = new AtomicBoolean(false);
-    private final int count;
+    private final int maxNumberConnections;
 
-    public GuardImpl(int count) {
-        this.count = count;
+    public GuardImpl(int maxNumberConnections) {
+        this(maxNumberConnections, 1);
+    }
+
+    public GuardImpl(int maxNumberConnections, int numberSimultaneousConnections) {
+        this.maxNumberConnections = maxNumberConnections;
+        connectSemaphore = new Semaphore(numberSimultaneousConnections);
     }
 
     public void acquire() throws InterruptedException {
@@ -36,7 +41,7 @@ public class GuardImpl implements Guard {
                 throw new BrokenBarrierException();
             }
             currCount.incrementAndGet();
-            while (currCount.get() < count || broken.get()) {
+            while (currCount.get() < maxNumberConnections || broken.get()) {
                 condition.await();
             }
             condition.signalAll();
