@@ -1,7 +1,7 @@
 package ru.itmo.mit.cli.strategies;
 
 import ru.itmo.mit.Constants;
-import ru.itmo.mit.GraphicsSaver;
+import ru.itmo.mit.LineChartSaver;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.benchmarks.BenchmarkImpl;
 
@@ -36,7 +36,7 @@ public class SelectingOtherParametersStrategy implements StrategyCLI {
         benchmarkBuilder
                 .setOther1(other1).setOther2(other2)
                 .setStatisticsRecorder(new StatisticsRecorder())
-                .setGraphSaver(new GraphicsSaver());
+                .setGraphSaver(new LineChartSaver());
 
         return new LaunchBenchStrategy(printStream, benchmarkBuilder.build());
     }
