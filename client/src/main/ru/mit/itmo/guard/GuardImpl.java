@@ -41,7 +41,7 @@ public class GuardImpl implements Guard {
                 throw new BrokenBarrierException();
             }
             currCount.incrementAndGet();
-            while (currCount.get() < maxNumberConnections || broken.get()) {
+            while (currCount.get() < maxNumberConnections && !broken.get()) {
                 condition.await();
             }
             condition.signalAll();
