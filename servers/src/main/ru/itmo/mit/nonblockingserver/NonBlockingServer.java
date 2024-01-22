@@ -30,7 +30,7 @@ public class NonBlockingServer implements Server {
     private final StatisticsRecorder statisticsRecorder;
     private ServerSocketChannel socketChannel;
     private boolean closed;
-    private int port = -1;
+    private int realPort = -1;
 
     public NonBlockingServer(int serverPort, StatisticsRecorder statisticsRecorder) {
         this(serverPort, NUMBER_THREADS, statisticsRecorder);
@@ -88,20 +88,20 @@ public class NonBlockingServer implements Server {
     public int getPort() throws InterruptedException {
         bindLock.lock();
         try {
-            while (port == -1) {
+            while (realPort == -1) {
                 bindCond.await();
             }
         } finally {
             bindLock.unlock();
         }
-        return port;
+        return realPort;
     }
 
     private void updatePort(SocketAddress socketAddress) {
         if (socketAddress instanceof InetSocketAddress address) {
             bindLock.lock();
             try {
-                port = address.getPort();
+                realPort = address.getPort();
                 bindCond.signalAll();
             } finally {
                 bindLock.unlock();
