@@ -123,7 +123,7 @@ public class ChannelHandler {
 
     private void handle(List<Integer> numbers, Runnable actionAfterCompletion) {
         var numbers1 = new ArrayList<>(numbers);
-        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder, StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
+        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);

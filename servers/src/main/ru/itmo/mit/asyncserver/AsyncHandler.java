@@ -88,15 +88,15 @@ public class AsyncHandler {
         return new AsyncHandler(executorService, asyncServerSocketChannel, asyncServer, statisticsRecorder);
     }
 
-    private void handleRead(List<Integer> numbers, Runnable runnable) {
+    private void handleRead(List<Integer> numbers, Runnable actionAfterCompletion) {
         var numbers1 = new ArrayList<>(numbers);
-        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder, StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
+        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         while (writeBuffer.capacity() < size + Integer.BYTES) increaseWriteBufferInWriteMode();
         writeBuffer.putInt(size).put(message.toByteArray());
         writeBuffer.flip();
-        runnable.run();
+        actionAfterCompletion.run();
         asyncWrite();
     }
 

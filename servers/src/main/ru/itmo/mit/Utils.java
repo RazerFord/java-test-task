@@ -59,12 +59,11 @@ public class Utils {
 
     public static void executeAndMeasureResults(
             @NotNull Runnable runnable,
-            @NotNull StatisticsRecorder statisticsRecorder,
-            StatisticsRecorder.Selector selector
+            @NotNull StatisticsRecorder statisticsRecorder
     ) {
         var start = Instant.now();
         runnable.run();
         var end = Instant.now();
-        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), selector);
+        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
     }
 }

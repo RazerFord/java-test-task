@@ -56,7 +56,7 @@ public class Handler implements Runnable {
 
     private void handle(List<Integer> numbers, OutputStream outputStream, @NotNull ExecutorService sender, Runnable actionAfterCompletion) {
         var numbers1 = new ArrayList<>(numbers);
-        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder, StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
+        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder);
         sender.execute(() -> {
             MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
             final int size = message.getSerializedSize();
