@@ -19,7 +19,6 @@ import ru.mit.itmo.waiting.WaitingImpl;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Objects;
 
 public class BenchmarkImpl implements Benchmark {
     private final Server server;
@@ -58,7 +57,6 @@ public class BenchmarkImpl implements Benchmark {
 
     @SuppressWarnings("UnusedReturnValue")
     public static class Builder {
-        private StatisticsRecorder statisticsRecorder;
         private int serverNumber;
         private int countRequests;
         private int numberParam;
@@ -67,7 +65,6 @@ public class BenchmarkImpl implements Benchmark {
         private int step;
         private int other1;
         private int other2;
-        private LineChartSaver lineChartSaver;
 
         private Builder() {
         }
@@ -124,29 +121,16 @@ public class BenchmarkImpl implements Benchmark {
             return this;
         }
 
-        public Builder setStatisticsRecorder(StatisticsRecorder statisticsRecorder) {
-            Objects.requireNonNull(statisticsRecorder);
-            this.statisticsRecorder = statisticsRecorder;
-            return this;
-        }
-
-        public Builder setGraphSaver(LineChartSaver lineChartSaver) {
-            Objects.requireNonNull(lineChartSaver);
-            this.lineChartSaver = lineChartSaver;
-            return this;
-        }
-
         public BenchmarkImpl build() {
             throwIf(from > to, new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step"));
-            lineChartSaver.setDescription(createDescription());
-            lineChartSaver.setAxisName(createAxisName());
-            lineChartSaver.setArchitectureName(createArchitectureName());
-            var server = createServer();
-            var clientBuilder = createClientBuilder();
-            return new BenchmarkImpl(server, createBenchStrategy(clientBuilder));
+            var statisticsRecorder = new StatisticsRecorder();
+            var lineChartSaver = new LineChartSaver(createDescription(), createAxisName(), createArchitectureName());
+            var server = createServer(statisticsRecorder);
+            var clientBuilder = createClientBuilder(statisticsRecorder);
+            return new BenchmarkImpl(server, createBenchStrategy(clientBuilder, statisticsRecorder, lineChartSaver));
         }
 
-        private Server createServer() {
+        private Server createServer(StatisticsRecorder statisticsRecorder) {
             return switch (serverNumber) {
                 case 1 -> new BlockingServer(Constants.PORT, statisticsRecorder);
                 case 2 -> new NonBlockingServer(Constants.PORT, statisticsRecorder);
@@ -155,14 +139,18 @@ public class BenchmarkImpl implements Benchmark {
             };
         }
 
-        private Client.Builder createClientBuilder() {
+        private Client.Builder createClientBuilder(StatisticsRecorder statisticsRecorder) {
             return Client.builder()
                     .setTargetAddress(Constants.ADDRESS)
                     .setCountRequest(countRequests)
                     .setStatisticsRecorderSupplier(() -> statisticsRecorder);
         }
 
-        private BenchmarkStrategy createBenchStrategy(Client.Builder clientBuilder) {
+        private BenchmarkStrategy createBenchStrategy(
+                Client.Builder clientBuilder,
+                StatisticsRecorder statisticsRecorder,
+                LineChartSaver lineChartSaver
+        ) {
             var fromToStep = new FromToStep(from, to, step);
             return switch (numberParam) {
                 case 1 -> {

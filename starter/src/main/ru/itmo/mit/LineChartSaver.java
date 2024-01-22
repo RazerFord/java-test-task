@@ -24,27 +24,21 @@ public class LineChartSaver {
     private final List<Integer> processingClient = new ArrayList<>();
     private final List<Integer> averageRequestProcessingTime = new ArrayList<>();
     private final Path pathToFiles = Path.of(PATH_TO_FILES).toAbsolutePath();
-    private String description = "";
-    private String axisName = "";
-    private String architectureName = "";
+    private final String description;
+    private final String axisName;
+    private final String architectureName;
+
+    public LineChartSaver(String description, String axisName, String architectureName) {
+        this.description = description;
+        this.axisName = axisName;
+        this.architectureName = architectureName;
+    }
 
     public void append(@NotNull StatisticsRecorder statisticsRecorder) {
         values.add(statisticsRecorder.value());
         processingRequest.add(statisticsRecorder.average(StatisticsRecorder.SELECTOR_PROCESSING_REQUEST));
         processingClient.add(statisticsRecorder.average(StatisticsRecorder.SELECTOR_PROCESSING_CLIENT));
         averageRequestProcessingTime.add(statisticsRecorder.average(StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME));
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setAxisName(String axisName) {
-        this.axisName = axisName;
-    }
-
-    public void setArchitectureName(String architectureName) {
-        this.architectureName = architectureName;
     }
 
     public void save() throws IOException {

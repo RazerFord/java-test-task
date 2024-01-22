@@ -1,8 +1,6 @@
 package ru.itmo.mit.cli.strategies;
 
 import ru.itmo.mit.Constants;
-import ru.itmo.mit.LineChartSaver;
-import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.benchmarks.BenchmarkImpl;
 
 import java.io.PrintStream;
@@ -33,11 +31,7 @@ public class SelectingOtherParametersStrategy implements StrategyCLI {
         printStream.printf(Constants.SELECT_OTHER_VALUES, params.toArray());
         int other1 = scanner.nextInt();
         int other2 = scanner.nextInt();
-        benchmarkBuilder
-                .setOther1(other1).setOther2(other2)
-                .setStatisticsRecorder(new StatisticsRecorder())
-                .setGraphSaver(new LineChartSaver());
 
-        return new LaunchBenchStrategy(printStream, benchmarkBuilder.build());
+        return new LaunchBenchStrategy(printStream, benchmarkBuilder.setOther1(other1).setOther2(other2).build());
     }
 }
