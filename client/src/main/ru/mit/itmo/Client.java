@@ -103,8 +103,8 @@ public class Client implements Runnable {
             release();
             tryToDo();
         } finally {
-            release();
             statisticsRecorder.makePassive();
+            release();
         }
     }
 
@@ -152,6 +152,7 @@ public class Client implements Runnable {
         }
 
         public Builder setTargetAddress(String targetAddress) {
+            Objects.requireNonNull(targetAddress);
             this.targetAddress = targetAddress;
             return this;
         }
@@ -167,34 +168,38 @@ public class Client implements Runnable {
         }
 
         public Builder setArrayGeneratorsSupplier(Supplier<ArrayGenerators> arrayGenerators) {
+            Objects.requireNonNull(arrayGenerators);
             this.arrayGenerators = arrayGenerators;
             return this;
         }
 
         public Builder setWaitingSupplier(Supplier<Waiting> waiting) {
+            Objects.requireNonNull(waiting);
             this.waiting = waiting;
             return this;
         }
 
         public Builder setGuardSupplier(Supplier<Guard> guard) {
+            Objects.requireNonNull(guard);
             this.guard = guard;
             return this;
         }
 
         public Builder setStatisticsRecorderSupplier(Supplier<StatisticsRecorder> statisticsRecorder) {
+            Objects.requireNonNull(statisticsRecorder);
             this.statisticsRecorder = statisticsRecorder;
             return this;
         }
 
         public Client build() {
             return new Client(
-                    Objects.requireNonNull(targetAddress),
+                    targetAddress,
                     targetPort,
                     countRequest,
-                    Objects.requireNonNull(arrayGenerators).get(),
-                    Objects.requireNonNull(waiting).get(),
-                    Objects.requireNonNull(guard).get(),
-                    Objects.requireNonNull(statisticsRecorder).get()
+                    Objects.requireNonNull(arrayGenerators.get()),
+                    Objects.requireNonNull(waiting.get()),
+                    Objects.requireNonNull(guard.get()),
+                    Objects.requireNonNull(statisticsRecorder.get())
             );
         }
     }
