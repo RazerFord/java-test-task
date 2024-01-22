@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 
 public class NonBlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(NonBlockingServer.class.getName());
-    private static final int NUMBER_THREADS = 10;
+    private static final int NUMBER_THREADS = Runtime.getRuntime().availableProcessors();
     private final Lock bindLock = new ReentrantLock();
     private final Condition bindCond = bindLock.newCondition();
     private final SocketAddress inetAddress;
