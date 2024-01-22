@@ -9,6 +9,8 @@ import ru.mit.itmo.guard.GuardImpl;
 
 import java.io.IOException;
 
+import static ru.itmo.mit.Constants.NUMBER_SIMULTANEOUS_CONNECTIONS;
+
 public class BenchArrayLengthStrategy implements BenchmarkStrategy {
     private final FromToStep fromToStepLength;
     private final int countClients;
@@ -40,7 +42,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
             statisticsRecorder.updateValue(j);
             int arrayLength = j;
-            var guard = new GuardImpl(countClients);
+            var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength))
                     .setGuardSupplier(() -> guard);
             BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);

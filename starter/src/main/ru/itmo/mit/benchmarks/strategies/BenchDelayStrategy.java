@@ -10,6 +10,8 @@ import ru.mit.itmo.waiting.WaitingImpl;
 import java.io.IOException;
 import java.time.Duration;
 
+import static ru.itmo.mit.Constants.NUMBER_SIMULTANEOUS_CONNECTIONS;
+
 public class BenchDelayStrategy implements BenchmarkStrategy {
     private final FromToStep fromToStepDelay;
     private final int countClients;
@@ -42,7 +44,7 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
             statisticsRecorder.updateValue(j);
             int delay = j;
-            var guard = new GuardImpl(countClients);
+            var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(delay)))
                     .setGuardSupplier(() -> guard);
 

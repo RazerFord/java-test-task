@@ -8,6 +8,8 @@ import ru.mit.itmo.guard.GuardImpl;
 
 import java.io.IOException;
 
+import static ru.itmo.mit.Constants.NUMBER_SIMULTANEOUS_CONNECTIONS;
+
 public class BenchNumberClientsStrategy implements BenchmarkStrategy {
     private final FromToStep fromToStepClients;
     private final Client.Builder clientBuilder;
@@ -36,7 +38,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
             statisticsRecorder.updateValue(j);
             Thread[] threadsClient = new Thread[j];
-            var guard = new GuardImpl(j);
+            var guard = new GuardImpl(j, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setGuardSupplier(() -> guard);
 
             BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
