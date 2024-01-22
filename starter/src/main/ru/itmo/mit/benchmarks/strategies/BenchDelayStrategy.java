@@ -18,19 +18,22 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
     private final Client.Builder clientBuilder;
     private final StatisticsRecorder statisticsRecorder;
     private final LineChartSaver lineChartSaver;
+    private final int numberWarmingIterations;
 
     public BenchDelayStrategy(
             FromToStep fromToStepDelay,
             int countClients,
             Client.Builder clientBuilder,
             StatisticsRecorder statisticsRecorder,
-            LineChartSaver lineChartSaver
+            LineChartSaver lineChartSaver,
+            int numberWarmingIterations
     ) {
         this.fromToStepDelay = fromToStepDelay;
         this.countClients = countClients;
         this.clientBuilder = clientBuilder;
         this.statisticsRecorder = statisticsRecorder;
         this.lineChartSaver = lineChartSaver;
+        this.numberWarmingIterations = numberWarmingIterations;
     }
 
     @Override
@@ -41,12 +44,12 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
         int from = fromToStepDelay.from();
         int to = fromToStepDelay.to();
         int step = fromToStepDelay.step();
+        warmUp(from);
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
             statisticsRecorder.updateValue(j);
             int delay = j;
             var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
-            clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(delay)))
-                    .setGuardSupplier(() -> guard);
+            clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(delay))).setGuardSupplier(() -> guard);
 
             BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
             if (!statisticsRecorder.isBroken()) lineChartSaver.append(statisticsRecorder);
@@ -54,5 +57,15 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
             if (j == to) break;
         }
         lineChartSaver.save();
+    }
+
+    private void warmUp(int delay) throws InterruptedException {
+        Thread[] threadsClient = new Thread[countClients];
+        for (int i = 0; i < numberWarmingIterations; i++) {
+            var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
+            clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(delay))).setGuardSupplier(() -> guard);
+            BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
+            statisticsRecorder.clear();
+        }
     }
 }

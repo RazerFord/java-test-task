@@ -15,17 +15,20 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
     private final Client.Builder clientBuilder;
     private final StatisticsRecorder statisticsRecorder;
     private final LineChartSaver lineChartSaver;
+    private final int numberWarmingIterations;
 
     public BenchNumberClientsStrategy(
             FromToStep fromToStepClients,
             Client.Builder clientBuilder,
             StatisticsRecorder statisticsRecorder,
-            LineChartSaver lineChartSaver
+            LineChartSaver lineChartSaver,
+            int numberWarmingIterations
     ) {
         this.fromToStepClients = fromToStepClients;
         this.clientBuilder = clientBuilder;
         this.statisticsRecorder = statisticsRecorder;
         this.lineChartSaver = lineChartSaver;
+        this.numberWarmingIterations = numberWarmingIterations;
     }
 
     @Override
@@ -35,6 +38,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
         int from = fromToStepClients.from();
         int to = fromToStepClients.to();
         int step = fromToStepClients.step();
+        warmUp(from);
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
             statisticsRecorder.updateValue(j);
             Thread[] threadsClient = new Thread[j];
@@ -47,5 +51,14 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
             if (j == to) break;
         }
         lineChartSaver.save();
+    }
+
+    private void warmUp(int countClients) throws InterruptedException {
+        Thread[] threadsClient = new Thread[countClients];
+        for (int i = 0; i < numberWarmingIterations; i++){
+            var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
+            clientBuilder.setGuardSupplier(() -> guard);
+            BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
+        }
     }
 }

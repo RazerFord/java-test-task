@@ -20,6 +20,8 @@ import ru.mit.itmo.waiting.WaitingImpl;
 import java.io.IOException;
 import java.time.Duration;
 
+import static ru.itmo.mit.Constants.NUMBER_WARMING_ITERATIONS;
+
 public class BenchmarkImpl implements Benchmark {
     private final Server server;
     private final BenchmarkStrategy benchmarkStrategy;
@@ -140,10 +142,18 @@ public class BenchmarkImpl implements Benchmark {
         }
 
         private Client.Builder createClientBuilder(StatisticsRecorder statisticsRecorder) {
-            return Client.builder()
+            var builder = Client.builder()
                     .setTargetAddress(Constants.ADDRESS)
                     .setCountRequest(countRequests)
                     .setStatisticsRecorderSupplier(() -> statisticsRecorder);
+
+            return switch (numberParam) {
+                case 1 -> builder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(other2)));
+                case 2 -> builder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(other1))
+                        .setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(other2)));
+                case 3 -> builder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(other1));
+                default -> throw new IllegalArgumentException(SELECTION_ERROR);
+            };
         }
 
         private BenchmarkStrategy createBenchStrategy(
@@ -153,18 +163,12 @@ public class BenchmarkImpl implements Benchmark {
         ) {
             var fromToStep = new FromToStep(from, to, step);
             return switch (numberParam) {
-                case 1 -> {
-                    clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(other2)));
-                    yield new BenchArrayLengthStrategy(fromToStep, other1, clientBuilder, statisticsRecorder, lineChartSaver);
-                }
-                case 2 -> {
-                    clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(other1)).setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(other2)));
-                    yield new BenchNumberClientsStrategy(fromToStep, clientBuilder, statisticsRecorder, lineChartSaver);
-                }
-                case 3 -> {
-                    clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(other1));
-                    yield new BenchDelayStrategy(fromToStep, other2, clientBuilder, statisticsRecorder, lineChartSaver);
-                }
+                case 1 -> new BenchArrayLengthStrategy(fromToStep, other1, clientBuilder, statisticsRecorder,
+                        lineChartSaver, NUMBER_WARMING_ITERATIONS);
+                case 2 -> new BenchNumberClientsStrategy(fromToStep, clientBuilder, statisticsRecorder,
+                        lineChartSaver, NUMBER_WARMING_ITERATIONS);
+                case 3 -> new BenchDelayStrategy(fromToStep, other2, clientBuilder, statisticsRecorder,
+                        lineChartSaver, NUMBER_WARMING_ITERATIONS);
                 default -> throw new IllegalArgumentException(SELECTION_ERROR);
             };
         }

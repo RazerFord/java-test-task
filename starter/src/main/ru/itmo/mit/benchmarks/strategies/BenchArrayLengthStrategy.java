@@ -17,39 +17,53 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
     private final Client.Builder clientBuilder;
     private final StatisticsRecorder statisticsRecorder;
     private final LineChartSaver lineChartSaver;
+    private final int numberWarmingIterations;
 
     public BenchArrayLengthStrategy(
             FromToStep fromToStepLength,
             int countClients,
             Client.Builder clientBuilder,
             StatisticsRecorder statisticsRecorder,
-            LineChartSaver lineChartSaver
+            LineChartSaver lineChartSaver,
+            int numberWarmingIterations
     ) {
         this.fromToStepLength = fromToStepLength;
         this.countClients = countClients;
         this.clientBuilder = clientBuilder;
         this.statisticsRecorder = statisticsRecorder;
         this.lineChartSaver = lineChartSaver;
+        this.numberWarmingIterations = numberWarmingIterations;
     }
 
     @Override
     public void launch(int port) throws InterruptedException, IOException {
         clientBuilder.setTargetPort(port);
+
         Thread[] threadsClient = new Thread[countClients];
         int from = fromToStepLength.from();
         int to = fromToStepLength.to();
         int step = fromToStepLength.step();
+        warmUp(from);
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
             statisticsRecorder.updateValue(j);
             int arrayLength = j;
             var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
-            clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength))
-                    .setGuardSupplier(() -> guard);
+            clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength)).setGuardSupplier(() -> guard);
             BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
             if (!statisticsRecorder.isBroken()) lineChartSaver.append(statisticsRecorder);
             statisticsRecorder.clear();
             if (j == to) break;
         }
         lineChartSaver.save();
+    }
+
+    private void warmUp(int arrayLength) throws InterruptedException {
+        Thread[] threadsClient = new Thread[countClients];
+        for (int i = 0; i < numberWarmingIterations; i++) {
+            var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
+            clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength)).setGuardSupplier(() -> guard);
+            BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
+            statisticsRecorder.clear();
+        }
     }
 }
