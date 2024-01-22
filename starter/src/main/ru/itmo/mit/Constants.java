@@ -15,6 +15,7 @@ public class Constants {
     public static final String PREFIX_PROC_REQ = "proc_request";
     public static final String PREFIX_PROC_CLIENT = "proc_client";
     public static final String PREFIX_AVG_REQ_CLIENT = "avg_req_client";
+    public static final String PATH_TO_FILES = "./results";
 
     public static final String SELECT_ARCHITECTURE = """
             Select architecture:

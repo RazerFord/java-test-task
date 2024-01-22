@@ -11,6 +11,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,7 @@ public class GraphicsSaver {
     private final List<Integer> processingRequest = new ArrayList<>();
     private final List<Integer> processingClient = new ArrayList<>();
     private final List<Integer> averageRequestProcessingTime = new ArrayList<>();
+    private final Path pathToFiles = Path.of(PATH_TO_FILES).toAbsolutePath();
     private String description = "";
     private String axisName = "";
     private String architectureName = "";
@@ -51,6 +54,7 @@ public class GraphicsSaver {
     }
 
     public void save() throws IOException {
+        Files.createDirectories(pathToFiles);
         var nanos = Instant.now().getNano();
         saveFiles(nanos);
         saveGraphics(nanos);
@@ -58,10 +62,10 @@ public class GraphicsSaver {
 
     private void saveFiles(int nanos) throws IOException {
         try (
-                var desc = new FileWriter(FILENAME_DESC.formatted(nanos));
-                var procReq = new FileWriter(TEMPLATE_FILENAME_TXT.formatted(PREFIX_PROC_REQ, nanos));
-                var procClient = new FileWriter(TEMPLATE_FILENAME_TXT.formatted(PREFIX_PROC_CLIENT, nanos));
-                var avgReqClient = new FileWriter(TEMPLATE_FILENAME_TXT.formatted(PREFIX_AVG_REQ_CLIENT, nanos))
+                var desc = new FileWriter(getFile(FILENAME_DESC.formatted(nanos)));
+                var procReq = new FileWriter(getFile(TEMPLATE_FILENAME_TXT.formatted(PREFIX_PROC_REQ, nanos)));
+                var procClient = new FileWriter(getFile(TEMPLATE_FILENAME_TXT.formatted(PREFIX_PROC_CLIENT, nanos)));
+                var avgReqClient = new FileWriter(getFile(TEMPLATE_FILENAME_TXT.formatted(PREFIX_AVG_REQ_CLIENT, nanos)))
         ) {
             desc.write(description);
             for (int i = 0; i < values.size(); i++) {
@@ -75,21 +79,21 @@ public class GraphicsSaver {
 
     private void saveGraphics(int nanos) throws IOException {
         var procReq = new LineChart(
-                TEMPLATE_FILENAME_IMG.formatted(PREFIX_PROC_REQ, nanos),
+                getFile(TEMPLATE_FILENAME_IMG.formatted(PREFIX_PROC_REQ, nanos)),
                 architectureName,
                 ABSCISSA_PROC_REQ,
                 axisName,
                 ORDINATE
         );
         var procClient = new LineChart(
-                TEMPLATE_FILENAME_IMG.formatted(PREFIX_PROC_CLIENT, nanos),
+                getFile(TEMPLATE_FILENAME_IMG.formatted(PREFIX_PROC_CLIENT, nanos)),
                 architectureName,
                 ABSCISSA_PROC_CLIENT,
                 axisName,
                 ORDINATE
         );
         var avgReqClient = new LineChart(
-                TEMPLATE_FILENAME_IMG.formatted(PREFIX_AVG_REQ_CLIENT, nanos),
+                getFile(TEMPLATE_FILENAME_IMG.formatted(PREFIX_AVG_REQ_CLIENT, nanos)),
                 architectureName,
                 ABSCISSA_AVG_REQ_CLIENT,
                 axisName,
@@ -108,25 +112,29 @@ public class GraphicsSaver {
         avgReqClient.save();
     }
 
+    private @NotNull File getFile(String filename) {
+        return pathToFiles.resolve(filename).toFile();
+    }
+
     private static final class LineChart {
         private static final Font FONT = new Font("Dialog", Font.PLAIN, 20);
         private static final int WIDTH = 640;
         private static final int HEIGHT = 480;
         private final XYSeries xySeries;
-        private final String filename;
+        private final File file;
         private final String title;
         private final String x;
         private final String y;
 
         private LineChart(
-                String filename,
+                File file,
                 String title,
                 String key,
                 String x,
                 String y
         ) {
             xySeries = new XYSeries(key);
-            this.filename = filename;
+            this.file = file;
             this.title = title;
             this.x = x;
             this.y = y;
@@ -157,7 +165,7 @@ public class GraphicsSaver {
             plot.getDomainAxis().setLabelFont(FONT);
             plot.getRangeAxis().setLabelFont(FONT);
 
-            ChartUtils.saveChartAsJPEG(new File(filename), chart, WIDTH, HEIGHT);
+            ChartUtils.saveChartAsJPEG(file, chart, WIDTH, HEIGHT);
         }
     }
 }
