@@ -120,6 +120,8 @@ public class BenchmarkImpl implements Benchmark {
         public BenchmarkImpl build() {
             throwIf(from > to, new IllegalArgumentException("Should be: from >= 0, to >= 0, step > 0, from <= step"));
             graphSaver.setDescription(createDescription());
+            graphSaver.setAxisName(createAxisName());
+            graphSaver.setArchitectureName(createArchitectureName());
             var server = createServer();
             var clientBuilder = createClientBuilder();
             return new BenchmarkImpl(createBenchStrategy(server, clientBuilder));
@@ -166,6 +168,24 @@ public class BenchmarkImpl implements Benchmark {
                 case 1 -> Constants.DESCRIPTION.formatted(serverNumber, countRequests, fromToStep, other1, other2);
                 case 2 -> Constants.DESCRIPTION.formatted(serverNumber, countRequests, other1, fromToStep, other2);
                 case 3 -> Constants.DESCRIPTION.formatted(serverNumber, countRequests, other1, other2, fromToStep);
+                default -> throw new IllegalArgumentException(SELECTION_ERROR);
+            };
+        }
+
+        private String createArchitectureName() {
+            return switch (serverNumber) {
+                case 1 -> "Blocking architecture";
+                case 2 -> "Non-blocking architecture";
+                case 3 -> "Asynchronous architecture";
+                default -> throw SELECTION_ERROR;
+            };
+        }
+
+        private String createAxisName() {
+            return switch (numberParam) {
+                case 1 -> "array length";
+                case 2 -> "number of clients";
+                case 3 -> "time period from receiving to sending a message";
                 default -> throw new IllegalArgumentException(SELECTION_ERROR);
             };
         }
