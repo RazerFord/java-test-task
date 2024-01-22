@@ -15,6 +15,7 @@ import java.io.IOException;
 
 public class LineChart {
     private static final Font FONT = new Font("Dialog", Font.PLAIN, 20);
+    private static final Font FONT_TICK = new Font("Dialog", Font.PLAIN, 15);
     private static final int WIDTH = 640;
     private static final int HEIGHT = 480;
     private final XYSeries xySeries;
@@ -59,9 +60,15 @@ public class LineChart {
         plot.setDomainGridlinePaint(Color.black);
 
         chart.getLegend().setItemFont(FONT);
-        plot.getDomainAxis().setLabelFont(FONT);
-        plot.getRangeAxis().setLabelFont(FONT);
-        ((NumberAxis)plot.getRangeAxis()).setAutoRangeIncludesZero(false);
+
+        var domainAxis = plot.getDomainAxis();
+        domainAxis.setLabelFont(FONT);
+        domainAxis.setTickLabelFont(FONT_TICK);
+
+        var rangeAxis = plot.getRangeAxis();
+        rangeAxis.setLabelFont(FONT);
+        rangeAxis.setTickLabelFont(FONT_TICK);
+        ((NumberAxis) rangeAxis).setAutoRangeIncludesZero(false);
 
         ChartUtils.saveChartAsJPEG(file, chart, WIDTH, HEIGHT);
     }
