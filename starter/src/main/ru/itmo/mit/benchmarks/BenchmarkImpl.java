@@ -17,19 +17,38 @@ import ru.mit.itmo.Client;
 import ru.mit.itmo.arraygenerators.ArrayGeneratorsImpl;
 import ru.mit.itmo.waiting.WaitingImpl;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Objects;
 
 public class BenchmarkImpl implements Benchmark {
+    private final Server server;
     private final BenchmarkStrategy benchmarkStrategy;
 
-    private BenchmarkImpl(BenchmarkStrategy benchmarkStrategy) {
+    private BenchmarkImpl(Server server, BenchmarkStrategy benchmarkStrategy) {
+        this.server = server;
         this.benchmarkStrategy = benchmarkStrategy;
     }
 
     @Override
     public void bench() {
-        benchmarkStrategy.launch();
+        try {
+            var threadServer = new Thread(server);
+            threadServer.start();
+            benchmarkStrategy.launch(server.getPort());
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            try {
+                if (server != null) {
+                    server.close();
+                }
+            } catch (IOException ignored) {
+                // is the block empty on purpose
+            }
+        }
     }
 
     @Contract(value = " -> new", pure = true)
@@ -124,7 +143,7 @@ public class BenchmarkImpl implements Benchmark {
             graphicsSaver.setArchitectureName(createArchitectureName());
             var server = createServer();
             var clientBuilder = createClientBuilder();
-            return new BenchmarkImpl(createBenchStrategy(server, clientBuilder));
+            return new BenchmarkImpl(server, createBenchStrategy(clientBuilder));
         }
 
         private Server createServer() {
@@ -143,20 +162,20 @@ public class BenchmarkImpl implements Benchmark {
                     .setStatisticsRecorderSupplier(() -> statisticsRecorder);
         }
 
-        private BenchmarkStrategy createBenchStrategy(Server server, Client.Builder clientBuilder) {
+        private BenchmarkStrategy createBenchStrategy(Client.Builder clientBuilder) {
             var fromToStep = new FromToStep(from, to, step);
             return switch (numberParam) {
                 case 1 -> {
                     clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(other2)));
-                    yield new BenchArrayLengthStrategy(server, fromToStep, other1, clientBuilder, statisticsRecorder, graphicsSaver);
+                    yield new BenchArrayLengthStrategy(fromToStep, other1, clientBuilder, statisticsRecorder, graphicsSaver);
                 }
                 case 2 -> {
                     clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(other1)).setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(other2)));
-                    yield new BenchNumberClientsStrategy(server, fromToStep, clientBuilder, statisticsRecorder, graphicsSaver);
+                    yield new BenchNumberClientsStrategy(fromToStep, clientBuilder, statisticsRecorder, graphicsSaver);
                 }
                 case 3 -> {
                     clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(other1));
-                    yield new BenchDelayStrategy(server, fromToStep, other2, clientBuilder, statisticsRecorder, graphicsSaver);
+                    yield new BenchDelayStrategy(fromToStep, other2, clientBuilder, statisticsRecorder, graphicsSaver);
                 }
                 default -> throw new IllegalArgumentException(SELECTION_ERROR);
             };

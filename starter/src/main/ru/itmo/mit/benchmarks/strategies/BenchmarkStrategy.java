@@ -3,8 +3,10 @@ package ru.itmo.mit.benchmarks.strategies;
 import org.jetbrains.annotations.NotNull;
 import ru.mit.itmo.Client;
 
+import java.io.IOException;
+
 public interface BenchmarkStrategy {
-    void launch();
+    void launch(int port) throws InterruptedException, IOException;
 
     static void startAndJoinThreads(Thread @NotNull [] threadsClient, Client.Builder clientBuilder) throws InterruptedException {
         int length = threadsClient.length;
