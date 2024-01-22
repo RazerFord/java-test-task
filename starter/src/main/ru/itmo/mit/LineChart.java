@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -60,6 +61,7 @@ public class LineChart {
         chart.getLegend().setItemFont(FONT);
         plot.getDomainAxis().setLabelFont(FONT);
         plot.getRangeAxis().setLabelFont(FONT);
+        ((NumberAxis)plot.getRangeAxis()).setAutoRangeIncludesZero(false);
 
         ChartUtils.saveChartAsJPEG(file, chart, WIDTH, HEIGHT);
     }
