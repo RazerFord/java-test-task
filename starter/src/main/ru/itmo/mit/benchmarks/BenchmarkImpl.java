@@ -93,13 +93,13 @@ public class BenchmarkImpl implements Benchmark {
         }
 
         public Builder setCountRequests(int countRequests) {
-            throwIf(countRequests < 0, Constants.PARAMETER_NOT_NEGATIVE);
+            throwIf(countRequests <= 0, new IllegalArgumentException("Should be: number of requests > 0"));
             this.countRequests = countRequests;
             return this;
         }
 
         public Builder setNumberParam(int numberParam) {
-            throwIf(numberParam < 1 || numberParam > 3, Constants.PARAMETER_NOT_NEGATIVE);
+            throwIf(numberParam < 1 || numberParam > 3, SELECTION_ERROR);
             this.numberParam = numberParam;
             return this;
         }
@@ -228,6 +228,6 @@ public class BenchmarkImpl implements Benchmark {
             }
         }
 
-        private static final IllegalArgumentException SELECTION_ERROR = new IllegalArgumentException("The parameter number is incorrect");
+        private static final IllegalArgumentException SELECTION_ERROR = new IllegalArgumentException("The selected parameter is not correct");
     }
 }
