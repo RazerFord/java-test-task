@@ -16,6 +16,7 @@ public class Constants {
     public static final String PROC_CLIENT = "processing_client_on_server";
     public static final String AVG_REQ_CLIENT = "average_request_time_on_client";
     public static final String PATH_TO_FILES = "./results";
+    public static final String PATH_TO_IMAGES = "./images";
     public static final int NUMBER_SIMULTANEOUS_CONNECTIONS = 10;
     public static final int NUMBER_WARMING_ITERATIONS = 2;
     public static final boolean LOG = false;

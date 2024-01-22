@@ -23,6 +23,7 @@ public class LineChartSaver {
     private final List<Integer> processingClient = new ArrayList<>();
     private final List<Integer> averageRequestProcessingTime = new ArrayList<>();
     private final Path pathToFiles = Path.of(PATH_TO_FILES).toAbsolutePath();
+    private final Path pathToImages = Path.of(PATH_TO_IMAGES).toAbsolutePath();
     private final String description;
     private final String axisName;
     private final String architectureName;
@@ -70,13 +71,13 @@ public class LineChartSaver {
         var template = TEMPLATE_FILENAME_IMG.formatted(fileNamePrefix, changeableParameter, "%s");
         var builder = LineChart.builder().setTitle(fileNamePrefix).setX(axisName).setY(ORDINATE);
 
-        var procReq = builder.setFile(getFile(template.formatted(PROC_REQ)))
+        var procReq = builder.setFile(getImage(template.formatted(PROC_REQ)))
                 .setKey(ABSCISSA_PROC_REQ).build();
 
-        var procClient = builder.setFile(getFile(template.formatted(PROC_CLIENT)))
+        var procClient = builder.setFile(getImage(template.formatted(PROC_CLIENT)))
                 .setKey(ABSCISSA_PROC_CLIENT).build();
 
-        var avgReqClient = builder.setFile(getFile(template.formatted(AVG_REQ_CLIENT)))
+        var avgReqClient = builder.setFile(getImage(template.formatted(AVG_REQ_CLIENT)))
                 .setKey(ABSCISSA_AVG_REQ_CLIENT).build();
 
         for (int i = 0; i < values.size(); i++) {
@@ -93,5 +94,9 @@ public class LineChartSaver {
 
     private @NotNull File getFile(String filename) {
         return pathToFiles.resolve(filename).toFile();
+    }
+
+    private @NotNull File getImage(String imageName) {
+        return pathToImages.resolve(imageName).toFile();
     }
 }
