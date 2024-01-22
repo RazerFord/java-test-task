@@ -196,7 +196,7 @@ public class BenchmarkImpl implements Benchmark {
             return switch (numberParam) {
                 case 1 -> "array length";
                 case 2 -> "number of clients";
-                case 3 -> "time period from receiving to sending a message";
+                case 3 -> "time period from receiving to sending a message, ms";
                 default -> throw new IllegalArgumentException(SELECTION_ERROR);
             };
         }

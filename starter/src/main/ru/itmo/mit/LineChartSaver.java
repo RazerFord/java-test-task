@@ -15,7 +15,7 @@ import static ru.itmo.mit.Constants.*;
 
 public class LineChartSaver {
     private static final String PATTERN = "%s %s%n";
-    private static final String ORDINATE = "time";
+    private static final String ORDINATE = "time, ms";
     private static final String ABSCISSA_PROC_REQ = "request processing time";
     private static final String ABSCISSA_PROC_CLIENT = "client processing time";
     private static final String ABSCISSA_AVG_REQ_CLIENT = "average request time on client";
