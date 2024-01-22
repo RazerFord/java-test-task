@@ -36,7 +36,7 @@ public class GuardImpl implements Guard {
                 throw new BrokenBarrierException();
             }
             currCount.incrementAndGet();
-            while (currCount.get() < count) {
+            while (currCount.get() < count || broken.get()) {
                 condition.await();
             }
             condition.signalAll();
