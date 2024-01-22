@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -41,8 +40,9 @@ public class Handler implements Runnable {
                 var sender = Executors.newSingleThreadExecutor()
         ) {
             while (!socket1.isClosed() && !Thread.currentThread().isInterrupted()) {
-                var message = messageReader.read(inputStream);
-                var start = Instant.now();
+                var pair = messageReader.read(inputStream);
+                var message = pair.first();
+                var start = pair.second();
                 executorService.execute(() -> handle(message.getNumberList(),
                         outputStream,
                         sender,
