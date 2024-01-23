@@ -43,7 +43,8 @@ public class LineChartSaver {
 
     public void save() throws IOException {
         var fileNamePrefix = String.join("_", architectureName.toLowerCase().split("( )+"));
-        var changeableParameter = String.join("_", axisName.toLowerCase().split("( )+"));
+        var changeableParameter = String.join("_", axisName.toLowerCase()
+                .replaceAll("[^a-zA-Z0-9\\-\\s]", "").split("( )+"));
         Files.createDirectories(pathToFiles);
         saveFiles(fileNamePrefix, changeableParameter);
         saveGraphics(fileNamePrefix, changeableParameter);
