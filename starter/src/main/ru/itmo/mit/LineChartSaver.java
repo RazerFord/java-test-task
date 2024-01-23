@@ -22,17 +22,20 @@ public class LineChartSaver {
     private final List<Integer> processingRequest = new ArrayList<>();
     private final List<Integer> processingClient = new ArrayList<>();
     private final List<Integer> averageRequestProcessingTime = new ArrayList<>();
+    private final String fileNamePrefix;
+    private final String changeableParameter;
     private final Path pathToFiles;
     private final Path pathToImages = Path.of(PATH_TO_IMAGES).toAbsolutePath();
     private final String description;
     private final String axisName;
-    private final String architectureName;
 
-    public LineChartSaver(String description, String axisName, @NotNull String architectureName) {
-        this.pathToFiles = Path.of(PATH_TO_FILES).resolve(String.join("_", architectureName.toLowerCase().split("( )+"))).toAbsolutePath();
+    public LineChartSaver(String description, @NotNull String axisName, @NotNull String architectureName) {
+        fileNamePrefix = String.join("_", architectureName.toLowerCase().split("( )+"));
+        changeableParameter = String.join("_", axisName.toLowerCase()
+                .replaceAll("[^a-zA-Z0-9\\-\\s]", "").split("( )+"));
+        this.pathToFiles = Path.of(PATH_TO_FILES).resolve(fileNamePrefix).resolve(changeableParameter).toAbsolutePath();
         this.description = description;
         this.axisName = axisName;
-        this.architectureName = architectureName;
     }
 
     public void append(@NotNull StatisticsRecorder statisticsRecorder) {
@@ -43,16 +46,13 @@ public class LineChartSaver {
     }
 
     public void save() throws IOException {
-        var fileNamePrefix = String.join("_", architectureName.toLowerCase().split("( )+"));
-        var changeableParameter = String.join("_", axisName.toLowerCase()
-                .replaceAll("[^a-zA-Z0-9\\-\\s]", "").split("( )+"));
         Files.createDirectories(pathToFiles);
         Files.createDirectories(pathToImages);
-        saveFiles(fileNamePrefix, changeableParameter);
-        saveGraphics(fileNamePrefix, changeableParameter);
+        saveFiles();
+        saveGraphics();
     }
 
-    private void saveFiles(String fileNamePrefix, String changeableParameter) throws IOException {
+    private void saveFiles() throws IOException {
         var template = TEMPLATE_FILENAME_TXT.formatted(fileNamePrefix, changeableParameter, "%s");
         try (
                 var desc = new FileWriter(getFile(FILENAME_DESC.formatted(fileNamePrefix, changeableParameter)));
@@ -70,7 +70,7 @@ public class LineChartSaver {
         }
     }
 
-    private void saveGraphics(String fileNamePrefix, String changeableParameter) throws IOException {
+    private void saveGraphics() throws IOException {
         var template = TEMPLATE_FILENAME_IMG.formatted(fileNamePrefix, changeableParameter, "%s");
         var builder = LineChart.builder().setTitle(fileNamePrefix).setX(axisName).setY(ORDINATE);
 
