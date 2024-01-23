@@ -22,13 +22,14 @@ public class LineChartSaver {
     private final List<Integer> processingRequest = new ArrayList<>();
     private final List<Integer> processingClient = new ArrayList<>();
     private final List<Integer> averageRequestProcessingTime = new ArrayList<>();
-    private final Path pathToFiles = Path.of(PATH_TO_FILES).toAbsolutePath();
+    private final Path pathToFiles;
     private final Path pathToImages = Path.of(PATH_TO_IMAGES).toAbsolutePath();
     private final String description;
     private final String axisName;
     private final String architectureName;
 
-    public LineChartSaver(String description, String axisName, String architectureName) {
+    public LineChartSaver(String description, String axisName, @NotNull String architectureName) {
+        this.pathToFiles = Path.of(PATH_TO_FILES).resolve(String.join("_", architectureName.toLowerCase().split("( )+"))).toAbsolutePath();
         this.description = description;
         this.axisName = axisName;
         this.architectureName = architectureName;
@@ -46,6 +47,7 @@ public class LineChartSaver {
         var changeableParameter = String.join("_", axisName.toLowerCase()
                 .replaceAll("[^a-zA-Z0-9\\-\\s]", "").split("( )+"));
         Files.createDirectories(pathToFiles);
+        Files.createDirectories(pathToImages);
         saveFiles(fileNamePrefix, changeableParameter);
         saveGraphics(fileNamePrefix, changeableParameter);
     }
