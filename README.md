@@ -44,12 +44,12 @@
 
 ### Среднее время одного запроса на клиенте
 
-![Time period from receiving to sending message. Average request time on client](images/time_period_from_receiving_to_sending_message_average_request_time_on_client.png)
+![Time period from receiving to sending message. Average request time on client](images/time_period_from_receiving_to_sending_a_message_ms_average_request_time_on_client.png)
 
 ### Время обработки клиента на сервере
 
-![Time period from receiving to sending message. Processing client on server](images/time_period_from_receiving_to_sending_message_processing_client_on_server.png)
+![Time period from receiving to sending message. Processing client on server](images/time_period_from_receiving_to_sending_a_message_ms_processing_client_on_server.png)
 
 ### Время обработки запроса на сервере
 
-![Time period from receiving to sending message. Processing request on server](images/time_period_from_receiving_to_sending_message_processing_request_on_server.png)
+![Time period from receiving to sending message. Processing request on server](images/time_period_from_receiving_to_sending_a_message_ms_processing_request_on_server.png)
