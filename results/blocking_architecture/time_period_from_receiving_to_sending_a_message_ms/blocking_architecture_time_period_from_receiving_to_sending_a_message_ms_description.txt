@@ -1,0 +1,17 @@
+Architecture:
+    1. Blocking
+    2. Non-blocking
+    3. Asynchronous
+
+Parameters:
+    S - Selected architecture
+    X - Total number of requests sent by each client
+    N - Number of elements in the array
+    M - Number of working clients
+    D - Time interval between requests, ms
+
+S = 1
+X = 100
+N = 2000
+M = 100
+D = 0 .. 500 step 20
