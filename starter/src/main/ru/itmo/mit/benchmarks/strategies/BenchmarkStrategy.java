@@ -1,12 +1,13 @@
 package ru.itmo.mit.benchmarks.strategies;
 
+import ru.itmo.mit.Server;
 import ru.mit.itmo.Client;
 
 import java.io.IOException;
 import java.io.PrintStream;
 
 public interface BenchmarkStrategy {
-    void launch(int port, PrintStream printStream) throws InterruptedException, IOException;
+    void launch(Server server, PrintStream printStream) throws InterruptedException, IOException;
 
     class ClientLauncher {
         private final Client.Builder clientBuilder;
