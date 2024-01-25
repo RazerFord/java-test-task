@@ -1,10 +1,8 @@
 package ru.itmo.mit.blockingserver;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import ru.itmo.mit.MessageOuterClass;
-import ru.itmo.mit.ServerException;
-import ru.itmo.mit.StatisticsRecorder;
-import ru.itmo.mit.Utils;
+import ru.itmo.mit.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,12 +13,15 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Handler implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(Handler.class.getName());
     private final MessageReader messageReader = new MessageReader();
+    private final Pair<AtomicLong, AtomicLong> requestProcTimeAndCount = createPair();
+    private final Pair<AtomicLong, AtomicLong> clientProcTimeAndCount = createPair();
     private final Socket socket;
     private final ExecutorService executorService;
     private final StatisticsRecorder statisticsRecorder;
@@ -54,9 +55,17 @@ public class Handler implements Runnable {
         }
     }
 
-    private void handle(List<Integer> numbers, OutputStream outputStream, @NotNull ExecutorService sender, Runnable actionAfterCompletion) {
+    private void handle(
+            List<Integer> numbers,
+            OutputStream outputStream,
+            @NotNull ExecutorService sender,
+            Runnable actionAfterCompletion
+    ) {
         var numbers1 = new ArrayList<>(numbers);
-        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder);
+        Utils.executeAndMeasureResults(
+                () -> Utils.bubbleSort(numbers1),
+                statisticsRecorder
+        );
         sender.execute(() -> {
             MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
             final int size = message.getSerializedSize();
@@ -65,5 +74,10 @@ public class Handler implements Runnable {
             actionAfterCompletion.run();
             Utils.run(() -> outputStream.write(byteBuffer.array()));
         });
+    }
+
+    @Contract(" -> new")
+    private static @NotNull Pair<AtomicLong, AtomicLong> createPair() {
+        return new Pair<>(new AtomicLong(0), new AtomicLong(0));
     }
 }

@@ -1,6 +1,7 @@
 package ru.itmo.mit.benchmarks.strategies;
 
 import ru.itmo.mit.LineChartSaver;
+import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.benchmarks.FromToStep;
 import ru.mit.itmo.Client;
@@ -34,8 +35,8 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
     }
 
     @Override
-    public void launch(int port, PrintStream printStream) throws InterruptedException, IOException {
-        clientBuilder.setTargetPort(port);
+    public void launch(Server server, PrintStream printStream) throws InterruptedException, IOException {
+        clientBuilder.setTargetPort(server.getPort());
 
         int from = fromToStepClients.from();
         int to = fromToStepClients.to();
@@ -43,24 +44,25 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
         warmUp(from);
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
             statisticsRecorder.updateValue(j);
-            Thread[] threadsClient = new Thread[j];
             var guard = new GuardImpl(j, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setGuardSupplier(() -> guard);
             printStream.printf(PROGRESS, j, to);
-            BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
+            var clientLauncher = new ClientLauncher(j, clientBuilder);
+            clientLauncher.launch();
             if (!statisticsRecorder.isBroken()) lineChartSaver.append(statisticsRecorder);
             statisticsRecorder.clear();
+            server.reset();
             if (j == to) break;
         }
         lineChartSaver.save();
     }
 
     private void warmUp(int countClients) throws InterruptedException {
-        Thread[] threadsClient = new Thread[countClients];
         for (int i = 0; i < numberWarmingIterations; i++){
             var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setGuardSupplier(() -> guard);
-            BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
+            var clientLauncher = new ClientLauncher(countClients, clientBuilder);
+            clientLauncher.launch();
         }
     }
 }

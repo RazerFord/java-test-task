@@ -6,6 +6,8 @@ import ru.itmo.mit.StatisticsRecorder;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -18,6 +20,7 @@ public class BlockingServer implements Server {
     private static final int NUMBER_THREADS = Runtime.getRuntime().availableProcessors();
     private final Lock bindLock = new ReentrantLock();
     private final Condition bindCond = bindLock.newCondition();
+    private final Queue<Handler> handlers = new ConcurrentLinkedQueue<>();
     private final int serverPort;
     private final int backlog;
     private final int numberThreads;
@@ -59,7 +62,9 @@ public class BlockingServer implements Server {
         ) {
             while (!closed && !socket1.isClosed() && !Thread.currentThread().isInterrupted()) {
                 var port = socket1.accept();
-                Thread thread = new Thread(new Handler(port, threadPool, statisticsRecorder));
+                var handler = new Handler(port, threadPool, statisticsRecorder);
+                handlers.add(handler);
+                Thread thread = new Thread(handler);
                 thread.setDaemon(true);
                 thread.start();
             }
@@ -85,5 +90,20 @@ public class BlockingServer implements Server {
             bindLock.unlock();
         }
         return socket.getLocalPort();
+    }
+
+    @Override
+    public void reset() {
+        handlers.clear();
+    }
+
+    @Override
+    public long getRequestProcessingTime() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long getClientProcessingTime() {
+        throw new UnsupportedOperationException();
     }
 }

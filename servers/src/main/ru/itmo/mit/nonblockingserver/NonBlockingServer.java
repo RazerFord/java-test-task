@@ -101,6 +101,21 @@ public class NonBlockingServer implements Server {
         return realPort;
     }
 
+    @Override
+    public void reset() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long getRequestProcessingTime() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long getClientProcessingTime() {
+        throw new UnsupportedOperationException();
+    }
+
     private void updatePort(SocketAddress socketAddress) {
         if (socketAddress instanceof InetSocketAddress address) {
             bindLock.lock();

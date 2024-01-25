@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StatisticsRecorder {
@@ -57,6 +58,18 @@ public class StatisticsRecorder {
         strategy.get().addRecord(selector.get(fileEntries), value.get(), time);
     }
 
+    public void addDelta(long time, AtomicLong value) {
+        strategy.get().addDelta(time, value);
+    }
+
+    public void addDeltaAndOne(long time, AtomicLong value, AtomicLong count) {
+        strategy.get().addDeltaAndOne(time, value, count);
+    }
+
+    public void addRecord(long time, @NotNull Queue<Long> queue) {
+        queue.add(time);
+    }
+
     public int average(@NotNull Queue<Long> queue) {
         var size = queue.size();
         var skip = (size > 5) ? size / 5 : 0;
@@ -73,9 +86,12 @@ public class StatisticsRecorder {
         Queue<Long> get(FileEntries fileEntries);
     }
 
-    @FunctionalInterface
     private interface StatisticsRecorderStrategy {
         void addRecord(@NotNull Queue<Long> queue, int value, long time);
+
+        void addDelta(long time, AtomicLong value);
+
+        void addDeltaAndOne(long time, AtomicLong value, AtomicLong count);
     }
 
     private static final ActiveStrategy ACTIVE_STRATEGY = new ActiveStrategy();
@@ -89,11 +105,32 @@ public class StatisticsRecorder {
         public void addRecord(@NotNull Queue<Long> queue, int value, long time) {
             queue.add(time);
         }
+
+        @Override
+        public void addDelta(long time, @NotNull AtomicLong value) {
+            value.addAndGet(time);
+        }
+
+        @Override
+        public void addDeltaAndOne(long time, AtomicLong value, @NotNull AtomicLong count) {
+            addDelta(time, value);
+            count.incrementAndGet();
+        }
     }
 
     private static class PassiveStrategy implements StatisticsRecorderStrategy {
         @Override
         public void addRecord(@NotNull Queue<Long> queue, int value, long time) {
+            // this code block must be empty
+        }
+
+        @Override
+        public void addDelta(long time, AtomicLong value) {
+            // this code block must be empty
+        }
+
+        @Override
+        public void addDeltaAndOne(long time, AtomicLong value, AtomicLong count) {
             // this code block must be empty
         }
     }
