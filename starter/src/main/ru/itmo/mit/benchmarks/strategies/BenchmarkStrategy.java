@@ -1,6 +1,5 @@
 package ru.itmo.mit.benchmarks.strategies;
 
-import org.jetbrains.annotations.NotNull;
 import ru.mit.itmo.Client;
 
 import java.io.IOException;
@@ -9,15 +8,33 @@ import java.io.PrintStream;
 public interface BenchmarkStrategy {
     void launch(int port, PrintStream printStream) throws InterruptedException, IOException;
 
-    static void startAndJoinThreads(Thread @NotNull [] threadsClient, Client.Builder clientBuilder) throws InterruptedException {
-        int length = threadsClient.length;
-        for (int i = 0; i < length; i++) {
-            var thread = new Thread(clientBuilder.build());
-            threadsClient[i] = thread;
-            thread.start();
+    class ClientLauncher {
+        private final Client.Builder clientBuilder;
+        private final Thread[] threadsClient;
+        private final Client[] clients;
+
+        public ClientLauncher(int numberClients, Client.Builder clientBuilder) {
+            this.clientBuilder = clientBuilder;
+            threadsClient = new Thread[numberClients];
+            clients = new Client[numberClients];
         }
-        for (Thread thread : threadsClient) {
-            thread.join();
+
+        public void launch() throws InterruptedException {
+            int length = threadsClient.length;
+            for (int i = 0; i < length; i++) {
+                var client = clientBuilder.build();
+                clients[i] = client;
+                var thread = new Thread(client);
+                threadsClient[i] = thread;
+                thread.start();
+            }
+            for (Thread thread : threadsClient) {
+                thread.join();
+            }
+        }
+
+        public Client[] getClients() {
+            return clients;
         }
     }
 }
