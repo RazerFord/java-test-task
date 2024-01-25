@@ -14,10 +14,9 @@ import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static ru.itmo.mit.Utils.calculate;
 import static ru.itmo.mit.Utils.createAtomicLongPair;
 
-public class AsyncHandler implements Result, AddedResult {
+public class AsyncHandler implements AddedResult {
     private static final int FACTOR = 2;
     private static final int INITIAL_READ_BUFFER_SIZE = 1024;
     private static final int INITIAL_WRITE_BUFFER_SIZE = 1024;
@@ -129,16 +128,6 @@ public class AsyncHandler implements Result, AddedResult {
         ByteBuffer newByteBuffer = ByteBuffer.wrap(Arrays.copyOf(writeBuffer.array(), newSizeBuffer));
         newByteBuffer.position(writeBuffer.position());
         writeBuffer = newByteBuffer;
-    }
-
-    @Override
-    public int getRequestProcessingTime() {
-        return calculate(requestProcTimeAndCount);
-    }
-
-    @Override
-    public int getClientProcessingTime() {
-        return calculate(clientProcTimeAndCount);
     }
 
     @Override

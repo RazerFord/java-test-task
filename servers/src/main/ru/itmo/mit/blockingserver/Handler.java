@@ -17,10 +17,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static ru.itmo.mit.Utils.calculate;
 import static ru.itmo.mit.Utils.createAtomicLongPair;
 
-public class Handler implements Runnable, Result, AddedResult {
+public class Handler implements Runnable, AddedResult {
     private static final Logger LOGGER = Logger.getLogger(Handler.class.getName());
     private final MessageReader messageReader = new MessageReader();
     private final Pair<AtomicLong, AtomicLong> requestProcTimeAndCount = createAtomicLongPair();
@@ -78,16 +77,6 @@ public class Handler implements Runnable, Result, AddedResult {
             actionAfterCompletion.run();
             Utils.run(() -> outputStream.write(byteBuffer.array()));
         });
-    }
-
-    @Override
-    public int getRequestProcessingTime() {
-        return calculate(requestProcTimeAndCount);
-    }
-
-    @Override
-    public int getClientProcessingTime() {
-        return calculate(clientProcTimeAndCount);
     }
 
     @Override

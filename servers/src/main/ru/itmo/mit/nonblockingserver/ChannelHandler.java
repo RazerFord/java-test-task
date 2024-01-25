@@ -17,10 +17,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static ru.itmo.mit.Utils.calculate;
 import static ru.itmo.mit.Utils.createAtomicLongPair;
 
-public class ChannelHandler implements Result, AddedResult {
+public class ChannelHandler implements AddedResult {
     private static final Logger LOGGER = Logger.getLogger(ChannelHandler.class.getName());
     private static final int FACTOR = 2;
     private static final int INITIAL_READ_BUFFER_SIZE = 1024;
@@ -153,16 +152,6 @@ public class ChannelHandler implements Result, AddedResult {
         ByteBuffer newByteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer.array(), newSizeBuffer));
         newByteBuffer.position(readBuffer.position());
         readBuffer = newByteBuffer;
-    }
-
-    @Override
-    public int getRequestProcessingTime() {
-        return calculate(requestProcTimeAndCount);
-    }
-
-    @Override
-    public int getClientProcessingTime() {
-        return calculate(clientProcTimeAndCount);
     }
 
     @Override
