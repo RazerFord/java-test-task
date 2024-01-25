@@ -3,13 +3,10 @@ package ru.itmo.mit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StatisticsRecorder {
-    private final FileEntries fileEntries = FileEntries.create();
-    private final AtomicInteger value = new AtomicInteger();
     private final AtomicReference<StatisticsRecorderStrategy> strategy = new AtomicReference<>(PASSIVE_STRATEGY);
 
     public boolean isActive() {
@@ -36,24 +33,6 @@ public class StatisticsRecorder {
         strategy.set(BROKEN_STRATEGY);
     }
 
-    public void clear() {
-        fileEntries.processingRequest().clear();
-        fileEntries.processingClient().clear();
-        fileEntries.averageRequestProcessingTime().clear();
-    }
-
-    public int value() {
-        return value.get();
-    }
-
-    public void updateValue(int value) {
-        this.value.set(value);
-    }
-
-    public void addRecord(long time, @NotNull Selector selector) {
-        strategy.get().addRecord(selector.get(fileEntries), value.get(), time);
-    }
-
     public void addDelta(long time, AtomicLong value) {
         strategy.get().addDelta(time, value);
     }
@@ -69,17 +48,8 @@ public class StatisticsRecorder {
         return (int) queue.stream().skip(skip).limit(limit).mapToLong(Long::longValue).average().orElse(0);
     }
 
-    public static final Selector SELECTOR_PROCESSING_REQUEST = FileEntries::processingRequest;
-    public static final Selector SELECTOR_PROCESSING_CLIENT = FileEntries::processingClient;
-    public static final Selector SELECTOR_AVG_REQ_PROCESSING_TIME = FileEntries::averageRequestProcessingTime;
-
-    @FunctionalInterface
-    public interface Selector {
-        Queue<Long> get(FileEntries fileEntries);
-    }
 
     private interface StatisticsRecorderStrategy {
-        void addRecord(@NotNull Queue<Long> queue, int value, long time);
 
         void addDelta(long time, AtomicLong value);
 
@@ -94,11 +64,6 @@ public class StatisticsRecorder {
 
     private static class ActiveStrategy implements StatisticsRecorderStrategy {
         @Override
-        public void addRecord(@NotNull Queue<Long> queue, int value, long time) {
-            queue.add(time);
-        }
-
-        @Override
         public void addDelta(long time, @NotNull AtomicLong value) {
             value.addAndGet(time);
         }
@@ -111,11 +76,6 @@ public class StatisticsRecorder {
     }
 
     private static class PassiveStrategy implements StatisticsRecorderStrategy {
-        @Override
-        public void addRecord(@NotNull Queue<Long> queue, int value, long time) {
-            // this code block must be empty
-        }
-
         @Override
         public void addDelta(long time, AtomicLong value) {
             // this code block must be empty

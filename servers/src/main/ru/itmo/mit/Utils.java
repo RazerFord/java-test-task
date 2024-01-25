@@ -6,12 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.ToLongFunction;
 
 public class Utils {
     public static void run(RunnableWrapper runnableWrapper) {
@@ -49,39 +46,6 @@ public class Utils {
     @Contract(" -> new")
     public static @NotNull Pair<AtomicLong, AtomicLong> createAtomicLongPair() {
         return new Pair<>(new AtomicLong(0), new AtomicLong(0));
-    }
-
-    public static int calculate(@NotNull Pair<AtomicLong, AtomicLong> pair) {
-        return (int) (pair.first().get() / pair.second().get());
-    }
-
-    public static <T> Queue<Long> queueToQueueLong(@NotNull Queue<T> queue, ToLongFunction<? super T> mapper) {
-        return queue.stream().mapToLong(mapper).collect(ArrayDeque::new, ArrayDeque::addLast, ArrayDeque::addAll);
-    }
-
-    @Contract(pure = true)
-    public static @NotNull Runnable createActionAfterCompletion(
-            StatisticsRecorder statisticsRecorder,
-            Instant start
-    ) {
-        Runnable[] runnable = new Runnable[1];
-        runnable[0] = () -> {
-            var end = Instant.now();
-            statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_CLIENT);
-            runnable[0] = () -> {
-            };
-        };
-        return runnable[0];
-    }
-
-    public static void executeAndMeasureResults(
-            @NotNull Runnable runnable,
-            @NotNull StatisticsRecorder statisticsRecorder
-    ) {
-        var start = Instant.now();
-        runnable.run();
-        var end = Instant.now();
-        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
     }
 
     @Contract(pure = true)

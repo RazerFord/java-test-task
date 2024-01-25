@@ -52,7 +52,6 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
         int step = fromToStepDelay.step();
         warmUp(from);
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
-            statisticsRecorder.updateValue(j);
             int delay = j;
             var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(delay))).setGuardSupplier(() -> guard);
@@ -66,13 +65,12 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
                 var clientProcessingOnServer = server.getClientProcessingTime();
                 var requestProcessingOnServer = server.getRequestProcessingTime();
                 lineChartSaver.append(
-                        statisticsRecorder.value(),
+                        delay,
                         requestProcessingOnServer,
                         clientProcessingOnServer,
                         avgRequestOnClient
                 );
             }
-            statisticsRecorder.clear();
             server.reset();
             if (j == to) break;
         }
@@ -85,7 +83,6 @@ public class BenchDelayStrategy implements BenchmarkStrategy {
             clientBuilder.setWaitingSupplier(() -> new WaitingImpl(Duration.ofMillis(delay))).setGuardSupplier(() -> guard);
             var clientLauncher = new ClientLauncher(countClients, clientBuilder);
             clientLauncher.launch();
-            statisticsRecorder.clear();
         }
     }
 }

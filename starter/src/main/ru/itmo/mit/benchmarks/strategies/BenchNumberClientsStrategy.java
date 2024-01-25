@@ -47,7 +47,6 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
         int step = fromToStepClients.step();
         warmUp(from);
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
-            statisticsRecorder.updateValue(j);
             var guard = new GuardImpl(j, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setGuardSupplier(() -> guard);
             printStream.printf(PROGRESS, j, to);
@@ -60,13 +59,12 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
                 var clientProcessingOnServer = server.getClientProcessingTime();
                 var requestProcessingOnServer = server.getRequestProcessingTime();
                 lineChartSaver.append(
-                        statisticsRecorder.value(),
+                        j,
                         requestProcessingOnServer,
                         clientProcessingOnServer,
                         avgRequestOnClient
                 );
             }
-            statisticsRecorder.clear();
             server.reset();
             if (j == to) break;
         }

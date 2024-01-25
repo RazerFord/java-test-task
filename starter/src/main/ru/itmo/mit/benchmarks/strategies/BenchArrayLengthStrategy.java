@@ -51,7 +51,6 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
         int step = fromToStepLength.step();
         warmUp(from);
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
-            statisticsRecorder.updateValue(j);
             int arrayLength = j;
             var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength)).setGuardSupplier(() -> guard);
@@ -65,13 +64,12 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
                 var clientProcessingOnServer = server.getClientProcessingTime();
                 var requestProcessingOnServer = server.getRequestProcessingTime();
                 lineChartSaver.append(
-                        statisticsRecorder.value(),
+                        arrayLength,
                         requestProcessingOnServer,
                         clientProcessingOnServer,
                         avgRequestOnClient
                 );
             }
-            statisticsRecorder.clear();
             server.reset();
             if (j == to) break;
         }
@@ -84,7 +82,6 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
             clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength)).setGuardSupplier(() -> guard);
             var clientLauncher = new ClientLauncher(countClients, clientBuilder);
             clientLauncher.launch();
-            statisticsRecorder.clear();
         }
     }
 }
