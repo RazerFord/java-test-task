@@ -10,9 +10,6 @@ import ru.mit.itmo.guard.GuardImpl;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Queue;
 
 import static ru.itmo.mit.Constants.NUMBER_SIMULTANEOUS_CONNECTIONS;
 import static ru.itmo.mit.Constants.PROGRESS;
@@ -41,6 +38,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
     @Override
     public void launch(@NotNull Server server, PrintStream printStream) throws InterruptedException, IOException {
         clientBuilder.setTargetPort(server.getPort());
+        var statisticSaver = new StatisticSaver(server, statisticsRecorder, lineChartSaver);
 
         int from = fromToStepClients.from();
         int to = fromToStepClients.to();
@@ -50,21 +48,7 @@ public class BenchNumberClientsStrategy implements BenchmarkStrategy {
             var guard = new GuardImpl(j, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setGuardSupplier(() -> guard);
             printStream.printf(PROGRESS, j, to);
-            var clientLauncher = new ClientLauncher(j, clientBuilder);
-            clientLauncher.launch();
-            if (!statisticsRecorder.isBroken()) {
-                Queue<Long> queue = new ArrayDeque<>();
-                Arrays.stream(clientLauncher.getClients()).forEach(it -> it.addIfNonZeroAverageRequestTime(queue));
-                var avgRequestOnClient = statisticsRecorder.average(queue);
-                var clientProcessingOnServer = server.getClientProcessingTime();
-                var requestProcessingOnServer = server.getRequestProcessingTime();
-                lineChartSaver.append(
-                        j,
-                        requestProcessingOnServer,
-                        clientProcessingOnServer,
-                        avgRequestOnClient
-                );
-            }
+            statisticSaver.startAndSaveStatistic(j, clientBuilder, j);
             server.reset();
             if (j == to) break;
         }
