@@ -38,11 +38,16 @@ public class LineChartSaver {
         this.axisName = axisName;
     }
 
-    public void append(@NotNull StatisticsRecorder statisticsRecorder) {
-        values.add(statisticsRecorder.value());
-        processingRequest.add(statisticsRecorder.average(StatisticsRecorder.SELECTOR_PROCESSING_REQUEST));
-        processingClient.add(statisticsRecorder.average(StatisticsRecorder.SELECTOR_PROCESSING_CLIENT));
-        averageRequestProcessingTime.add(statisticsRecorder.average(StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME));
+    public void append(
+            int value,
+            int requestProcessingOnServer,
+            int clientProcessingOnServer,
+            int avgRequestOnClient
+    ) {
+        values.add(value);
+        processingRequest.add(requestProcessingOnServer);
+        processingClient.add(clientProcessingOnServer);
+        averageRequestProcessingTime.add(avgRequestOnClient);
     }
 
     public void save() throws IOException {

@@ -46,10 +46,6 @@ public class StatisticsRecorder {
         return value.get();
     }
 
-    public int average(@NotNull Selector selector) {
-        return average(selector.get(fileEntries));
-    }
-
     public void updateValue(int value) {
         this.value.set(value);
     }
@@ -64,10 +60,6 @@ public class StatisticsRecorder {
 
     public void addDeltaAndOne(long time, AtomicLong value, AtomicLong count) {
         strategy.get().addDeltaAndOne(time, value, count);
-    }
-
-    public void addRecord(long time, @NotNull Queue<Long> queue) {
-        queue.add(time);
     }
 
     public int average(@NotNull Queue<Long> queue) {
@@ -112,8 +104,8 @@ public class StatisticsRecorder {
         }
 
         @Override
-        public void addDeltaAndOne(long time, AtomicLong value, @NotNull AtomicLong count) {
-            addDelta(time, value);
+        public void addDeltaAndOne(long time, @NotNull AtomicLong value, @NotNull AtomicLong count) {
+            value.addAndGet(time);
             count.incrementAndGet();
         }
     }

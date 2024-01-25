@@ -1,7 +1,7 @@
 package ru.itmo.mit;
 
 public interface Result {
-    long getRequestProcessingTime();
+    int getRequestProcessingTime();
 
-    long getClientProcessingTime();
+    int getClientProcessingTime();
 }

@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Handler implements Runnable {
+public class Handler implements Runnable, Result {
     private static final Logger LOGGER = Logger.getLogger(Handler.class.getName());
     private final MessageReader messageReader = new MessageReader();
     private final Pair<AtomicLong, AtomicLong> requestProcTimeAndCount = createPair();
@@ -47,7 +47,7 @@ public class Handler implements Runnable {
                 executorService.execute(() -> handle(message.getNumberList(),
                         outputStream,
                         sender,
-                        Utils.createActionAfterCompletion(statisticsRecorder, start))
+                        Utils.createActionAfterCompletion(statisticsRecorder, start, clientProcTimeAndCount))
                 );
             }
         } catch (IOException | ServerException | RejectedExecutionException e) {
@@ -64,7 +64,8 @@ public class Handler implements Runnable {
         var numbers1 = new ArrayList<>(numbers);
         Utils.executeAndMeasureResults(
                 () -> Utils.bubbleSort(numbers1),
-                statisticsRecorder
+                statisticsRecorder,
+                requestProcTimeAndCount
         );
         sender.execute(() -> {
             MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
@@ -76,8 +77,22 @@ public class Handler implements Runnable {
         });
     }
 
+    @Override
+    public int getRequestProcessingTime() {
+        return calculate(requestProcTimeAndCount);
+    }
+
+    @Override
+    public int getClientProcessingTime() {
+        return calculate(clientProcTimeAndCount);
+    }
+
     @Contract(" -> new")
     private static @NotNull Pair<AtomicLong, AtomicLong> createPair() {
         return new Pair<>(new AtomicLong(0), new AtomicLong(0));
+    }
+
+    private static int calculate(@NotNull Pair<AtomicLong, AtomicLong> pair) {
+        return (int) (pair.first().get() / pair.second().get());
     }
 }

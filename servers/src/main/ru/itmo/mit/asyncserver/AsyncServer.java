@@ -104,12 +104,12 @@ public class AsyncServer implements Server {
     }
 
     @Override
-    public long getRequestProcessingTime() {
+    public int getRequestProcessingTime() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public long getClientProcessingTime() {
+    public int getClientProcessingTime() {
         throw new UnsupportedOperationException();
     }
 

@@ -1,5 +1,6 @@
 package ru.itmo.mit.benchmarks.strategies;
 
+import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.LineChartSaver;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
@@ -10,6 +11,9 @@ import ru.mit.itmo.guard.GuardImpl;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Queue;
 
 import static ru.itmo.mit.Constants.NUMBER_SIMULTANEOUS_CONNECTIONS;
 import static ru.itmo.mit.Constants.PROGRESS;
@@ -39,7 +43,7 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
     }
 
     @Override
-    public void launch(Server server, PrintStream printStream) throws InterruptedException, IOException {
+    public void launch(@NotNull Server server, PrintStream printStream) throws InterruptedException, IOException {
         clientBuilder.setTargetPort(server.getPort());
 
         int from = fromToStepLength.from();
@@ -54,7 +58,18 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
             printStream.printf(PROGRESS, j, to);
             var clientLauncher = new ClientLauncher(countClients, clientBuilder);
             clientLauncher.launch();
-            if (!statisticsRecorder.isBroken()) lineChartSaver.append(statisticsRecorder);
+            if (!statisticsRecorder.isBroken()) {
+                Queue<Long> queue = Arrays.stream(clientLauncher.getClients()).mapToLong(Client::getAverageRequestTime).collect(ArrayDeque::new, ArrayDeque::addLast, ArrayDeque::addAll);
+                var avgRequestOnClient = statisticsRecorder.average(queue);
+                var clientProcessingOnServer = server.getClientProcessingTime();
+                var requestProcessingOnServer = server.getRequestProcessingTime();
+                lineChartSaver.append(
+                        statisticsRecorder.value(),
+                        requestProcessingOnServer,
+                        clientProcessingOnServer,
+                        avgRequestOnClient
+                );
+            }
             statisticsRecorder.clear();
             server.reset();
             if (j == to) break;
