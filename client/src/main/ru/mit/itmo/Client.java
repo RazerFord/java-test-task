@@ -118,10 +118,6 @@ public class Client implements Runnable {
         averageRequestTime.set(averageRequestTime.get() / numberRequestsActiveMode.get());
     }
 
-    public long getAverageRequestTime() {
-        return averageRequestTime.get();
-    }
-
     public void addIfNonZeroAverageRequestTime(@NotNull Queue<Long> queue) {
         if (averageRequestTime.get() == 0) return;
         queue.add(averageRequestTime.get());
