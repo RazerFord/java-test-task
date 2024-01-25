@@ -6,16 +6,16 @@ import ru.itmo.mit.StatisticsRecorder;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
-import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.ToLongFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static ru.itmo.mit.Utils.queueToQueueLong;
 
 public class BlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(BlockingServer.class.getName());
@@ -101,15 +101,11 @@ public class BlockingServer implements Server {
 
     @Override
     public int getRequestProcessingTime() {
-        return statisticsRecorder.average(handlersToQueue(Handler::getRequestProcessingTime));
+        return statisticsRecorder.average(queueToQueueLong(handlers, Handler::getRequestProcessingTime));
     }
 
     @Override
     public int getClientProcessingTime() {
-        return statisticsRecorder.average(handlersToQueue(Handler::getClientProcessingTime));
-    }
-
-    private Queue<Long> handlersToQueue(ToLongFunction<? super Handler> mapper) {
-        return handlers.stream().mapToLong(mapper).collect(ArrayDeque::new, ArrayDeque::addLast, ArrayDeque::addAll);
+        return statisticsRecorder.average(queueToQueueLong(handlers, Handler::getClientProcessingTime));
     }
 }

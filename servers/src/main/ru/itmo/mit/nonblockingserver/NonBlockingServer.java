@@ -13,12 +13,16 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static ru.itmo.mit.Utils.queueToQueueLong;
 
 public class NonBlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(NonBlockingServer.class.getName());
@@ -27,6 +31,7 @@ public class NonBlockingServer implements Server {
     private static final int NUMBER_THREADS = Integer.max(Runtime.getRuntime().availableProcessors() - NUMBER_THREADS_TO_SELECTORS, MIN_NUMBER_THREADS);
     private final Lock bindLock = new ReentrantLock();
     private final Condition bindCond = bindLock.newCondition();
+    private final Queue<ChannelHandler> channelHandlers = new ArrayDeque<>();
     private final SocketAddress inetAddress;
     private final int backlog;
     private final int numberThreads;
@@ -75,7 +80,9 @@ public class NonBlockingServer implements Server {
             while (!closed && socketChannel1.isOpen() && !Thread.currentThread().isInterrupted()) {
                 SocketChannel clientSocketChannel = socketChannel1.accept();
                 clientSocketChannel.configureBlocking(false);
-                selectorReader.addAndWakeup(new ChannelHandler(clientSocketChannel, threadPool, selectorWriter, statisticsRecorder));
+                var channelHandler = new ChannelHandler(clientSocketChannel, threadPool, selectorWriter, statisticsRecorder);
+                channelHandlers.add(channelHandler);
+                selectorReader.addAndWakeup(channelHandler);
             }
         } catch (SocketException | AsynchronousCloseException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
@@ -103,17 +110,17 @@ public class NonBlockingServer implements Server {
 
     @Override
     public void reset() {
-        throw new UnsupportedOperationException();
+        channelHandlers.clear();
     }
 
     @Override
     public int getRequestProcessingTime() {
-        throw new UnsupportedOperationException();
+        return statisticsRecorder.average(queueToQueueLong(channelHandlers, ChannelHandler::getRequestProcessingTime));
     }
 
     @Override
     public int getClientProcessingTime() {
-        throw new UnsupportedOperationException();
+        return statisticsRecorder.average(queueToQueueLong(channelHandlers, ChannelHandler::getClientProcessingTime));
     }
 
     private void updatePort(SocketAddress socketAddress) {

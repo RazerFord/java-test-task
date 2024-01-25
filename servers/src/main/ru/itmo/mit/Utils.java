@@ -6,9 +6,12 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.ToLongFunction;
 
 public class Utils {
     public static void run(RunnableWrapper runnableWrapper) {
@@ -41,6 +44,19 @@ public class Utils {
                 }
             }
         }
+    }
+
+    @Contract(" -> new")
+    public static @NotNull Pair<AtomicLong, AtomicLong> createAtomicLongPair() {
+        return new Pair<>(new AtomicLong(0), new AtomicLong(0));
+    }
+
+    public static int calculate(@NotNull Pair<AtomicLong, AtomicLong> pair) {
+        return (int) (pair.first().get() / pair.second().get());
+    }
+
+    public static <T> Queue<Long> queueToQueueLong(@NotNull Queue<T> queue, ToLongFunction<? super T> mapper) {
+        return queue.stream().mapToLong(mapper).collect(ArrayDeque::new, ArrayDeque::addLast, ArrayDeque::addAll);
     }
 
     @Contract(pure = true)

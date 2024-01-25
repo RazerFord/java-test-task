@@ -1,6 +1,5 @@
 package ru.itmo.mit.blockingserver;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.*;
 
@@ -17,11 +16,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static ru.itmo.mit.Utils.calculate;
+import static ru.itmo.mit.Utils.createAtomicLongPair;
+
 public class Handler implements Runnable, Result {
     private static final Logger LOGGER = Logger.getLogger(Handler.class.getName());
     private final MessageReader messageReader = new MessageReader();
-    private final Pair<AtomicLong, AtomicLong> requestProcTimeAndCount = createPair();
-    private final Pair<AtomicLong, AtomicLong> clientProcTimeAndCount = createPair();
+    private final Pair<AtomicLong, AtomicLong> requestProcTimeAndCount = createAtomicLongPair();
+    private final Pair<AtomicLong, AtomicLong> clientProcTimeAndCount = createAtomicLongPair();
     private final Socket socket;
     private final ExecutorService executorService;
     private final StatisticsRecorder statisticsRecorder;
@@ -85,14 +87,5 @@ public class Handler implements Runnable, Result {
     @Override
     public int getClientProcessingTime() {
         return calculate(clientProcTimeAndCount);
-    }
-
-    @Contract(" -> new")
-    private static @NotNull Pair<AtomicLong, AtomicLong> createPair() {
-        return new Pair<>(new AtomicLong(0), new AtomicLong(0));
-    }
-
-    private static int calculate(@NotNull Pair<AtomicLong, AtomicLong> pair) {
-        return (int) (pair.first().get() / pair.second().get());
     }
 }

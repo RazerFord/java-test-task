@@ -1,10 +1,7 @@
 package ru.itmo.mit.nonblockingserver;
 
 import org.jetbrains.annotations.NotNull;
-import ru.itmo.mit.MessageOuterClass;
-import ru.itmo.mit.Pair;
-import ru.itmo.mit.StatisticsRecorder;
-import ru.itmo.mit.Utils;
+import ru.itmo.mit.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,14 +13,20 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class ChannelHandler {
+import static ru.itmo.mit.Utils.calculate;
+import static ru.itmo.mit.Utils.createAtomicLongPair;
+
+public class ChannelHandler implements Result {
     private static final Logger LOGGER = Logger.getLogger(ChannelHandler.class.getName());
     private static final int FACTOR = 2;
     private static final int INITIAL_READ_BUFFER_SIZE = 1024;
     private static final String ERR_MSG = "SelectionKey must not be null";
+    private final Pair<AtomicLong, AtomicLong> requestProcTimeAndCount = createAtomicLongPair();
+    private final Pair<AtomicLong, AtomicLong> clientProcTimeAndCount = createAtomicLongPair();
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
     private final Queue<Pair<ByteBuffer, Runnable>> writeBuffersAndExecutors = new ConcurrentLinkedQueue<>();
@@ -70,7 +73,10 @@ public class ChannelHandler {
             readBuffer.flip();
             var message = MessageOuterClass.Message.parseFrom(readBuffer);
             var start = Instant.now();
-            threadPool.execute(() -> handle(message.getNumberList(), Utils.createActionAfterCompletion(statisticsRecorder, start)));
+            threadPool.execute(() -> handle(
+                    message.getNumberList(),
+                    Utils.createActionAfterCompletion(statisticsRecorder, start, clientProcTimeAndCount)
+            ));
             readBuffer.position(sizeMessage);
             readBuffer.compact();
             sizeMessage = -1;
@@ -123,7 +129,7 @@ public class ChannelHandler {
 
     private void handle(List<Integer> numbers, Runnable actionAfterCompletion) {
         var numbers1 = new ArrayList<>(numbers);
-        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder);
+        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder, requestProcTimeAndCount);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES + size);
@@ -147,5 +153,15 @@ public class ChannelHandler {
         ByteBuffer newByteBuffer = ByteBuffer.wrap(Arrays.copyOf(readBuffer.array(), newSizeBuffer));
         newByteBuffer.position(readBuffer.position());
         readBuffer = newByteBuffer;
+    }
+
+    @Override
+    public int getRequestProcessingTime() {
+        return calculate(requestProcTimeAndCount);
+    }
+
+    @Override
+    public int getClientProcessingTime() {
+        return calculate(clientProcTimeAndCount);
     }
 }
