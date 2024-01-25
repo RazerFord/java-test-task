@@ -15,14 +15,13 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static ru.itmo.mit.Utils.queueToQueueLong;
 
 public class NonBlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(NonBlockingServer.class.getName());
@@ -31,7 +30,7 @@ public class NonBlockingServer implements Server {
     private static final int NUMBER_THREADS = Integer.max(Runtime.getRuntime().availableProcessors() - NUMBER_THREADS_TO_SELECTORS, MIN_NUMBER_THREADS);
     private final Lock bindLock = new ReentrantLock();
     private final Condition bindCond = bindLock.newCondition();
-    private final Queue<ChannelHandler> channelHandlers = new ArrayDeque<>();
+    private final Queue<ChannelHandler> channelHandlers = new ConcurrentLinkedQueue<>();
     private final SocketAddress inetAddress;
     private final int backlog;
     private final int numberThreads;
@@ -115,12 +114,16 @@ public class NonBlockingServer implements Server {
 
     @Override
     public int getRequestProcessingTime() {
-        return statisticsRecorder.average(queueToQueueLong(channelHandlers, ChannelHandler::getRequestProcessingTime));
+        Queue<Long> queue = new ArrayDeque<>();
+        channelHandlers.forEach(it -> it.addIfNotZeroRequestProcessingTime(queue));
+        return statisticsRecorder.average(queue);
     }
 
     @Override
     public int getClientProcessingTime() {
-        return statisticsRecorder.average(queueToQueueLong(channelHandlers, ChannelHandler::getClientProcessingTime));
+        Queue<Long> queue = new ArrayDeque<>();
+        channelHandlers.forEach(it -> it.addIfNotZeroClientProcessingTime(queue));
+        return statisticsRecorder.average(queue);
     }
 
     private void updatePort(SocketAddress socketAddress) {

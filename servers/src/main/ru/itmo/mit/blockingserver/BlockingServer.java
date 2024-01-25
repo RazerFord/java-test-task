@@ -6,6 +6,7 @@ import ru.itmo.mit.StatisticsRecorder;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
+import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
@@ -14,8 +15,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static ru.itmo.mit.Utils.queueToQueueLong;
 
 public class BlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(BlockingServer.class.getName());
@@ -101,11 +100,15 @@ public class BlockingServer implements Server {
 
     @Override
     public int getRequestProcessingTime() {
-        return statisticsRecorder.average(queueToQueueLong(handlers, Handler::getRequestProcessingTime));
+        Queue<Long> queue = new ArrayDeque<>();
+        handlers.forEach(it -> it.addIfNotZeroRequestProcessingTime(queue));
+        return statisticsRecorder.average(queue);
     }
 
     @Override
     public int getClientProcessingTime() {
-        return statisticsRecorder.average(queueToQueueLong(handlers, Handler::getClientProcessingTime));
+        Queue<Long> queue = new ArrayDeque<>();
+        handlers.forEach(it -> it.addIfNotZeroClientProcessingTime(queue));
+        return statisticsRecorder.average(queue);
     }
 }

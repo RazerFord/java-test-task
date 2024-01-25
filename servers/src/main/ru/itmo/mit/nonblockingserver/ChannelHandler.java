@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 import static ru.itmo.mit.Utils.calculate;
 import static ru.itmo.mit.Utils.createAtomicLongPair;
 
-public class ChannelHandler implements Result {
+public class ChannelHandler implements Result, AddedResult {
     private static final Logger LOGGER = Logger.getLogger(ChannelHandler.class.getName());
     private static final int FACTOR = 2;
     private static final int INITIAL_READ_BUFFER_SIZE = 1024;
@@ -163,5 +163,21 @@ public class ChannelHandler implements Result {
     @Override
     public int getClientProcessingTime() {
         return calculate(clientProcTimeAndCount);
+    }
+
+    @Override
+    public void addIfNotZeroRequestProcessingTime(Queue<Long> queue) {
+        var value = requestProcTimeAndCount.first().get();
+        var count = requestProcTimeAndCount.second().get();
+        if (count == 0) return;
+        queue.add(value / count);
+    }
+
+    @Override
+    public void addIfNotZeroClientProcessingTime(Queue<Long> queue) {
+        var value = clientProcTimeAndCount.first().get();
+        var count = clientProcTimeAndCount.second().get();
+        if (count == 0) return;
+        queue.add(value / count);
     }
 }

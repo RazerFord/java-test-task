@@ -59,7 +59,8 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
             var clientLauncher = new ClientLauncher(countClients, clientBuilder);
             clientLauncher.launch();
             if (!statisticsRecorder.isBroken()) {
-                Queue<Long> queue = Arrays.stream(clientLauncher.getClients()).mapToLong(Client::getAverageRequestTime).collect(ArrayDeque::new, ArrayDeque::addLast, ArrayDeque::addAll);
+                Queue<Long> queue = new ArrayDeque<>();
+                Arrays.stream(clientLauncher.getClients()).forEach(it -> it.addIfNonZeroAverageRequestTime(queue));
                 var avgRequestOnClient = statisticsRecorder.average(queue);
                 var clientProcessingOnServer = server.getClientProcessingTime();
                 var requestProcessingOnServer = server.getRequestProcessingTime();

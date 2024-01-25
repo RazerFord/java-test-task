@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -19,7 +20,7 @@ import java.util.logging.Logger;
 import static ru.itmo.mit.Utils.calculate;
 import static ru.itmo.mit.Utils.createAtomicLongPair;
 
-public class Handler implements Runnable, Result {
+public class Handler implements Runnable, Result, AddedResult {
     private static final Logger LOGGER = Logger.getLogger(Handler.class.getName());
     private final MessageReader messageReader = new MessageReader();
     private final Pair<AtomicLong, AtomicLong> requestProcTimeAndCount = createAtomicLongPair();
@@ -87,5 +88,21 @@ public class Handler implements Runnable, Result {
     @Override
     public int getClientProcessingTime() {
         return calculate(clientProcTimeAndCount);
+    }
+
+    @Override
+    public void addIfNotZeroRequestProcessingTime(Queue<Long> queue) {
+        var value = requestProcTimeAndCount.first().get();
+        var count = requestProcTimeAndCount.second().get();
+        if (count == 0) return;
+        queue.add(value / count);
+    }
+
+    @Override
+    public void addIfNotZeroClientProcessingTime(Queue<Long> queue) {
+        var value = clientProcTimeAndCount.first().get();
+        var count = clientProcTimeAndCount.second().get();
+        if (count == 0) return;
+        queue.add(value / count);
     }
 }

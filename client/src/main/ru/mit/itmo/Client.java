@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -113,11 +114,17 @@ public class Client implements Runnable {
             var diff = Duration.between(start, Instant.now()).toMillis();
             statisticsRecorder.addDeltaAndOne(diff, averageRequestTime, numberRequestsActiveMode);
         }
+        if (numberRequestsActiveMode.get() == 0) return;
         averageRequestTime.set(averageRequestTime.get() / numberRequestsActiveMode.get());
     }
 
     public long getAverageRequestTime() {
         return averageRequestTime.get();
+    }
+
+    public void addIfNonZeroAverageRequestTime(@NotNull Queue<Long> queue) {
+        if (averageRequestTime.get() == 0) return;
+        queue.add(averageRequestTime.get());
     }
 
     private MessageOuterClass.@NotNull Message buildRequest() {
