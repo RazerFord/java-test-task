@@ -14,8 +14,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,7 +26,7 @@ public class ChannelHandler {
     private static final String ERR_MSG = "SelectionKey must not be null";
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
-    private final Queue<Pair<ByteBuffer, Runnable>> writeBuffersAndExecutors = new LinkedBlockingQueue<>();
+    private final Queue<Pair<ByteBuffer, Runnable>> writeBuffersAndExecutors = new ConcurrentLinkedQueue<>();
     private final SocketChannel socketChannel;
     private final ExecutorService threadPool;
     private final SelectorWriter selectorWriter;
