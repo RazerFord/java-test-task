@@ -1,6 +1,8 @@
 package ru.itmo.mit.benchmarks.strategies;
 
+import org.jetbrains.annotations.NotNull;
 import ru.itmo.mit.LineChartSaver;
+import ru.itmo.mit.Server;
 import ru.itmo.mit.StatisticsRecorder;
 import ru.itmo.mit.benchmarks.FromToStep;
 import ru.mit.itmo.Client;
@@ -38,35 +40,32 @@ public class BenchArrayLengthStrategy implements BenchmarkStrategy {
     }
 
     @Override
-    public void launch(int port, PrintStream printStream) throws InterruptedException, IOException {
-        clientBuilder.setTargetPort(port);
+    public void launch(@NotNull Server server, PrintStream printStream) throws InterruptedException, IOException {
+        clientBuilder.setTargetPort(server.getPort());
+        var statisticSaver = new StatisticSaver(server, statisticsRecorder, lineChartSaver);
 
-        Thread[] threadsClient = new Thread[countClients];
         int from = fromToStepLength.from();
         int to = fromToStepLength.to();
         int step = fromToStepLength.step();
         warmUp(from);
         for (int j = from; j <= to; j = Integer.min(j + step, to)) {
-            statisticsRecorder.updateValue(j);
             int arrayLength = j;
             var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength)).setGuardSupplier(() -> guard);
             printStream.printf(PROGRESS, j, to);
-            BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
-            if (!statisticsRecorder.isBroken()) lineChartSaver.append(statisticsRecorder);
-            statisticsRecorder.clear();
+            statisticSaver.startAndSaveStatistic(countClients, clientBuilder, arrayLength);
+            server.reset();
             if (j == to) break;
         }
         lineChartSaver.save();
     }
 
     private void warmUp(int arrayLength) throws InterruptedException {
-        Thread[] threadsClient = new Thread[countClients];
         for (int i = 0; i < numberWarmingIterations; i++) {
             var guard = new GuardImpl(countClients, NUMBER_SIMULTANEOUS_CONNECTIONS);
             clientBuilder.setArrayGeneratorsSupplier(() -> new ArrayGeneratorsImpl(arrayLength)).setGuardSupplier(() -> guard);
-            BenchmarkStrategy.startAndJoinThreads(threadsClient, clientBuilder);
-            statisticsRecorder.clear();
+            var clientLauncher = new ClientLauncher(countClients, clientBuilder);
+            clientLauncher.launch();
         }
     }
 }

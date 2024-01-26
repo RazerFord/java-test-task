@@ -1,5 +1,6 @@
 package ru.itmo.mit.asyncserver;
 
+import ru.itmo.mit.Pair;
 import ru.itmo.mit.Server;
 import ru.itmo.mit.ServerException;
 import ru.itmo.mit.StatisticsRecorder;
@@ -10,6 +11,9 @@ import java.net.SocketAddress;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.ShutdownChannelGroupException;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
@@ -21,6 +25,7 @@ import java.util.logging.Logger;
 public class AsyncServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(AsyncServer.class.getName());
     private static final int NUMBER_THREADS = Runtime.getRuntime().availableProcessors();
+    private final Queue<AsyncHandler> asyncHandlers = new ConcurrentLinkedQueue<>();
     private final Lock acceptLock = new ReentrantLock();
     private final Lock bindLock = new ReentrantLock();
     private final Condition acceptCond = acceptLock.newCondition();
@@ -61,7 +66,10 @@ public class AsyncServer implements Server {
             serverChannel.bind(inetSocketAddress, backlog);
             updatePort(serverChannel.getLocalAddress());
 
-            serverChannel.accept(new AsyncHandler(threadPool, serverChannel, this, statisticsRecorder), AcceptCallback.INSTANCE);
+            var asyncHandler = new AsyncHandler(threadPool, serverChannel, this, statisticsRecorder);
+            asyncHandlers.add(asyncHandler);
+            var attachment = new Pair<>(asyncHandlers, asyncHandler);
+            serverChannel.accept(attachment, AcceptCallback.INSTANCE);
 
             acceptLock.lock();
             try {
@@ -96,6 +104,25 @@ public class AsyncServer implements Server {
             bindLock.unlock();
         }
         return realPort;
+    }
+
+    @Override
+    public void reset() {
+        asyncHandlers.clear();
+    }
+
+    @Override
+    public int getRequestProcessingTime() {
+        Queue<Long> queue = new ArrayDeque<>();
+        asyncHandlers.forEach(it -> it.addIfNotZeroRequestProcessingTime(queue));
+        return statisticsRecorder.average(queue);
+    }
+
+    @Override
+    public int getClientProcessingTime() {
+        Queue<Long> queue = new ArrayDeque<>();
+        asyncHandlers.forEach(it -> it.addIfNotZeroClientProcessingTime(queue));
+        return statisticsRecorder.average(queue);
     }
 
     private void updatePort(SocketAddress socketAddress) {

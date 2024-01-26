@@ -13,6 +13,9 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -22,9 +25,12 @@ import java.util.logging.Logger;
 
 public class NonBlockingServer implements Server {
     private static final Logger LOGGER = Logger.getLogger(NonBlockingServer.class.getName());
-    private static final int NUMBER_THREADS = Runtime.getRuntime().availableProcessors();
+    private static final int MIN_NUMBER_THREADS = 4;
+    private static final int NUMBER_THREADS_TO_SELECTORS = 2;
+    private static final int NUMBER_THREADS = Integer.max(Runtime.getRuntime().availableProcessors() - NUMBER_THREADS_TO_SELECTORS, MIN_NUMBER_THREADS);
     private final Lock bindLock = new ReentrantLock();
     private final Condition bindCond = bindLock.newCondition();
+    private final Queue<ChannelHandler> channelHandlers = new ConcurrentLinkedQueue<>();
     private final SocketAddress inetAddress;
     private final int backlog;
     private final int numberThreads;
@@ -73,7 +79,9 @@ public class NonBlockingServer implements Server {
             while (!closed && socketChannel1.isOpen() && !Thread.currentThread().isInterrupted()) {
                 SocketChannel clientSocketChannel = socketChannel1.accept();
                 clientSocketChannel.configureBlocking(false);
-                selectorReader.addAndWakeup(new ChannelHandler(clientSocketChannel, threadPool, selectorWriter, statisticsRecorder));
+                var channelHandler = new ChannelHandler(clientSocketChannel, threadPool, selectorWriter, statisticsRecorder);
+                channelHandlers.add(channelHandler);
+                selectorReader.addAndWakeup(channelHandler);
             }
         } catch (SocketException | AsynchronousCloseException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
@@ -97,6 +105,25 @@ public class NonBlockingServer implements Server {
             bindLock.unlock();
         }
         return realPort;
+    }
+
+    @Override
+    public void reset() {
+        channelHandlers.clear();
+    }
+
+    @Override
+    public int getRequestProcessingTime() {
+        Queue<Long> queue = new ArrayDeque<>();
+        channelHandlers.forEach(it -> it.addIfNotZeroRequestProcessingTime(queue));
+        return statisticsRecorder.average(queue);
+    }
+
+    @Override
+    public int getClientProcessingTime() {
+        Queue<Long> queue = new ArrayDeque<>();
+        channelHandlers.forEach(it -> it.addIfNotZeroClientProcessingTime(queue));
+        return statisticsRecorder.average(queue);
     }
 
     private void updatePort(SocketAddress socketAddress) {

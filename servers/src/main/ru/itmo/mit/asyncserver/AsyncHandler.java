@@ -1,9 +1,7 @@
 package ru.itmo.mit.asyncserver;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import ru.itmo.mit.MessageOuterClass;
-import ru.itmo.mit.StatisticsRecorder;
-import ru.itmo.mit.Utils;
+import ru.itmo.mit.*;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
@@ -12,15 +10,21 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class AsyncHandler {
+import static ru.itmo.mit.Utils.createAtomicLongPair;
+
+public class AsyncHandler implements AddedResult {
     private static final int FACTOR = 2;
     private static final int INITIAL_READ_BUFFER_SIZE = 1024;
     private static final int INITIAL_WRITE_BUFFER_SIZE = 1024;
     private int sizeMessage = -1;
     private ByteBuffer readBuffer = ByteBuffer.allocate(INITIAL_READ_BUFFER_SIZE);
     private ByteBuffer writeBuffer = ByteBuffer.allocate(INITIAL_WRITE_BUFFER_SIZE);
+    private final Pair<AtomicLong, AtomicLong> requestProcTimeAndCount = createAtomicLongPair();
+    private final Pair<AtomicLong, AtomicLong> clientProcTimeAndCount = createAtomicLongPair();
     private final ExecutorService executorService;
     private final AsynchronousServerSocketChannel asyncServerSocketChannel;
     private final AsyncServer asyncServer;
@@ -56,7 +60,7 @@ public class AsyncHandler {
         sizeMessage = -1;
         executorService.execute(() -> handleRead(
                 message.getNumberList(),
-                Utils.createActionAfterCompletion(statisticsRecorder, start)
+                Utils.createActionAfterCompletion(statisticsRecorder, start, clientProcTimeAndCount)
         ));
     }
 
@@ -90,7 +94,7 @@ public class AsyncHandler {
 
     private void handleRead(List<Integer> numbers, Runnable actionAfterCompletion) {
         var numbers1 = new ArrayList<>(numbers);
-        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder);
+        Utils.executeAndMeasureResults(() -> Utils.bubbleSort(numbers1), statisticsRecorder, requestProcTimeAndCount);
         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder().addAllNumber(numbers1).build();
         final int size = message.getSerializedSize();
         while (writeBuffer.capacity() < size + Integer.BYTES) increaseWriteBufferInWriteMode();
@@ -124,5 +128,21 @@ public class AsyncHandler {
         ByteBuffer newByteBuffer = ByteBuffer.wrap(Arrays.copyOf(writeBuffer.array(), newSizeBuffer));
         newByteBuffer.position(writeBuffer.position());
         writeBuffer = newByteBuffer;
+    }
+
+    @Override
+    public void addIfNotZeroRequestProcessingTime(Queue<Long> queue) {
+        var value = requestProcTimeAndCount.first().get();
+        var count = requestProcTimeAndCount.second().get();
+        if (count == 0) return;
+        queue.add(value / count);
+    }
+
+    @Override
+    public void addIfNotZeroClientProcessingTime(Queue<Long> queue) {
+        var value = clientProcTimeAndCount.first().get();
+        var count = clientProcTimeAndCount.second().get();
+        if (count == 0) return;
+        queue.add(value / count);
     }
 }

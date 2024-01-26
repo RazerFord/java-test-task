@@ -40,7 +40,7 @@ public class BenchmarkImpl implements Benchmark {
         try {
             var threadServer = new Thread(server);
             threadServer.start();
-            benchmarkStrategy.launch(server.getPort(), printStream);
+            benchmarkStrategy.launch(server, printStream);
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
         } catch (IOException e) {

@@ -1,5 +1,8 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     java
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 dependencies {
@@ -16,4 +19,19 @@ sourceSets {
             srcDir("src/main")
         }
     }
+}
+
+val mainClassName = "ru.itmo.mit.Main"
+project.setProperty("mainClassName", mainClassName)
+
+tasks.withType(Jar::class) {
+    manifest {
+        attributes["Main-Class"] = mainClassName
+    }
+}
+
+tasks.withType(ShadowJar::class.java) {
+    archiveBaseName.set("starter")
+    archiveClassifier.set("")
+    archiveVersion.set("")
 }

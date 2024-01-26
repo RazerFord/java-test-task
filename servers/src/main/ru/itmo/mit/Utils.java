@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Utils {
     public static void run(RunnableWrapper runnableWrapper) {
@@ -42,15 +43,21 @@ public class Utils {
         }
     }
 
+    @Contract(" -> new")
+    public static @NotNull Pair<AtomicLong, AtomicLong> createAtomicLongPair() {
+        return new Pair<>(new AtomicLong(0), new AtomicLong(0));
+    }
+
     @Contract(pure = true)
     public static @NotNull Runnable createActionAfterCompletion(
             StatisticsRecorder statisticsRecorder,
-            Instant start
+            Instant start,
+            Pair<AtomicLong, AtomicLong> clientProcTimeAndCount
     ) {
         Runnable[] runnable = new Runnable[1];
         runnable[0] = () -> {
-            var end = Instant.now();
-            statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_CLIENT);
+            var diff = Duration.between(start, Instant.now()).toMillis();
+            statisticsRecorder.addDeltaAndOne(diff, clientProcTimeAndCount.first(), clientProcTimeAndCount.second());
             runnable[0] = () -> {
             };
         };
@@ -59,11 +66,12 @@ public class Utils {
 
     public static void executeAndMeasureResults(
             @NotNull Runnable runnable,
-            @NotNull StatisticsRecorder statisticsRecorder
+            @NotNull StatisticsRecorder statisticsRecorder,
+            @NotNull Pair<AtomicLong, AtomicLong> requestProcTimeAndCount
     ) {
         var start = Instant.now();
         runnable.run();
-        var end = Instant.now();
-        statisticsRecorder.addRecord(Duration.between(start, end).toMillis(), StatisticsRecorder.SELECTOR_PROCESSING_REQUEST);
+        var diff = Duration.between(start, Instant.now()).toMillis();
+        statisticsRecorder.addDeltaAndOne(diff, requestProcTimeAndCount.first(), requestProcTimeAndCount.second());
     }
 }

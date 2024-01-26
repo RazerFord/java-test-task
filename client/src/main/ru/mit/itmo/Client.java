@@ -11,6 +11,8 @@ import ru.mit.itmo.guard.Guard;
 import ru.mit.itmo.waiting.Waiting;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.BindException;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -18,6 +20,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,6 +36,7 @@ public class Client implements Runnable {
     private final AtomicLong connectionAttempt = new AtomicLong(1);
     private final MessageReader messageReader = new MessageReader();
     private final MessageSender messageSender = new MessageSender();
+    private final AtomicLong averageRequestTime = new AtomicLong(0);
     private final String targetAddress;
     private final int targetPort;
     private final int countRequest;
@@ -81,18 +85,7 @@ public class Client implements Runnable {
             release();
             guard.await();
             statisticsRecorder.makeActive();
-            var start = Instant.now();
-            for (int i = 0; i < countRequest; i++) {
-                waiting.trySleep();
-                var message = buildRequest();
-                messageSender.send(message, outputStream);
-                message = messageReader.read(inputStream);
-                waiting.update(Duration.ofMillis(System.currentTimeMillis()));
-                checkSortingList(message.getNumberList());
-            }
-            var end = Instant.now();
-            statisticsRecorder.addRecord(Duration.between(start, end).toMillis() / countRequest,
-                    StatisticsRecorder.SELECTOR_AVG_REQ_PROCESSING_TIME);
+            processClient(outputStream, inputStream);
         } catch (BindException | ConnectException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
             long i = connectionAttempt.getAndIncrement();
@@ -106,6 +99,28 @@ public class Client implements Runnable {
             statisticsRecorder.makePassive();
             release();
         }
+    }
+
+    private void processClient(OutputStream outputStream, InputStream inputStream) throws InterruptedException, IOException {
+        var numberRequestsActiveMode = new AtomicLong(0);
+        for (int i = 0; i < countRequest; i++) {
+            var start = Instant.now();
+            waiting.trySleep();
+            var message = buildRequest();
+            messageSender.send(message, outputStream);
+            message = messageReader.read(inputStream);
+            waiting.update(Duration.ofMillis(System.currentTimeMillis()));
+            checkSortingList(message.getNumberList());
+            var diff = Duration.between(start, Instant.now()).toMillis();
+            statisticsRecorder.addDeltaAndOne(diff, averageRequestTime, numberRequestsActiveMode);
+        }
+        if (numberRequestsActiveMode.get() == 0) return;
+        averageRequestTime.set(averageRequestTime.get() / numberRequestsActiveMode.get());
+    }
+
+    public void addIfNonZeroAverageRequestTime(@NotNull Queue<Long> queue) {
+        if (averageRequestTime.get() == 0) return;
+        queue.add(averageRequestTime.get());
     }
 
     private MessageOuterClass.@NotNull Message buildRequest() {

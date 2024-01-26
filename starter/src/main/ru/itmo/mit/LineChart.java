@@ -2,27 +2,14 @@ package ru.itmo.mit;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartUtils;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
 public class LineChart {
-    private static final Font FONT = new Font("Dialog", Font.PLAIN, 20);
-    private static final Font FONT_TICK = new Font("Dialog", Font.PLAIN, 15);
-    private static final int WIDTH = 640;
-    private static final int HEIGHT = 480;
+    private final LineCharts lineCharts;
     private final XYSeries xySeries;
-    private final File file;
-    private final String title;
-    private final String x;
-    private final String y;
 
     private LineChart(
             File file,
@@ -31,11 +18,9 @@ public class LineChart {
             String x,
             String y
     ) {
+        lineCharts = LineCharts.builder().setFile(file).setTitle(title).setX(x).setY(y).build();
         xySeries = new XYSeries(key);
-        this.file = file;
-        this.title = title;
-        this.x = x;
-        this.y = y;
+        lineCharts.add(xySeries);
     }
 
     public void add(double x, double y) {
@@ -43,34 +28,7 @@ public class LineChart {
     }
 
     public void save() throws IOException {
-        var dataset = new XYSeriesCollection(xySeries);
-        var render = new XYLineAndShapeRenderer();
-
-        render.setSeriesLinesVisible(0, true);
-        render.setSeriesPaint(0, Color.blue);
-        render.setSeriesStroke(0, new BasicStroke(2));
-
-        var chart = ChartFactory.createXYLineChart(title, x, y, dataset);
-        var plot = chart.getXYPlot();
-
-        plot.setRenderer(render);
-        plot.setRangeGridlinesVisible(true);
-        plot.setRangeGridlinePaint(Color.black);
-        plot.setDomainGridlinesVisible(true);
-        plot.setDomainGridlinePaint(Color.black);
-
-        chart.getLegend().setItemFont(FONT);
-
-        var domainAxis = plot.getDomainAxis();
-        domainAxis.setLabelFont(FONT);
-        domainAxis.setTickLabelFont(FONT_TICK);
-
-        var rangeAxis = plot.getRangeAxis();
-        rangeAxis.setLabelFont(FONT);
-        rangeAxis.setTickLabelFont(FONT_TICK);
-        ((NumberAxis) rangeAxis).setAutoRangeIncludesZero(false);
-
-        ChartUtils.saveChartAsJPEG(file, chart, WIDTH, HEIGHT);
+        lineCharts.save();
     }
 
     @Contract(value = " -> new", pure = true)
